@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: prices
+    description: Live gold, silver, and forex prices
+  - name: alerts
+    description: Custom price alerts
 paths:
   /healthz:
     get:
@@ -24,6 +28,124 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /prices:
+    get:
+      operationId: getPrices
+      tags: [prices]
+      summary: Get current gold, silver, and forex prices
+      responses:
+        "200":
+          description: Current price snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceSnapshot"
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List all alerts
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+    post:
+      operationId: createAlert
+      tags: [alerts]
+      summary: Create a new price alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+  /alerts/triggered:
+    get:
+      operationId: listTriggeredAlerts
+      tags: [alerts]
+      summary: List alerts currently triggered and awaiting acknowledgement
+      responses:
+        "200":
+          description: List of triggered alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+  /alerts/{id}:
+    patch:
+      operationId: updateAlert
+      tags: [alerts]
+      summary: Update an alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlertUpdate"
+      responses:
+        "200":
+          description: Updated alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteAlert
+      tags: [alerts]
+      summary: Delete an alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+  /alerts/{id}/acknowledge:
+    post:
+      operationId: acknowledgeAlert
+      tags: [alerts]
+      summary: Acknowledge (dismiss) a triggered alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Acknowledged alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+        "404":
+          description: Not found
 components:
   schemas:
     HealthStatus:
@@ -33,4 +155,113 @@ components:
           type: string
       required:
         - status
+    MetalPrice:
+      type: object
+      properties:
+        symbol:
+          type: string
+          description: "Metal ticker, e.g. XAU, XAG"
+        name:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+      required: [symbol, name, price, currency]
+    ForexRate:
+      type: object
+      properties:
+        pair:
+          type: string
+          description: "Currency pair, e.g. EUR/USD"
+        rate:
+          type: number
+      required: [pair, rate]
+    PriceSnapshot:
+      type: object
+      properties:
+        updatedAt:
+          type: string
+          format: date-time
+        metals:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetalPrice"
+        forex:
+          type: array
+          items:
+            $ref: "#/components/schemas/ForexRate"
+        stale:
+          type: boolean
+          description: "True if the last upstream price fetch failed and this is a cached snapshot"
+      required: [updatedAt, metals, forex, stale]
+    Alert:
+      type: object
+      properties:
+        id:
+          type: integer
+        assetSymbol:
+          type: string
+          description: "XAU, XAG, EUR/USD, GBP/USD, USD/JPY"
+        assetLabel:
+          type: string
+          description: "Human readable label, e.g. Gold (XAU)"
+        targetPrice:
+          type: number
+        direction:
+          type: string
+          enum: [above, below]
+        status:
+          type: string
+          enum: [active, triggered, acknowledged, disabled]
+        note:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        triggeredAt:
+          type: ["string", "null"]
+          format: date-time
+        acknowledgedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - id
+        - assetSymbol
+        - assetLabel
+        - targetPrice
+        - direction
+        - status
+        - note
+        - createdAt
+        - triggeredAt
+        - acknowledgedAt
+    AlertInput:
+      type: object
+      properties:
+        assetSymbol:
+          type: string
+        assetLabel:
+          type: string
+        targetPrice:
+          type: number
+        direction:
+          type: string
+          enum: [above, below]
+        note:
+          type: ["string", "null"]
+      required: [assetSymbol, assetLabel, targetPrice, direction]
+    AlertUpdate:
+      type: object
+      properties:
+        targetPrice:
+          type: number
+        direction:
+          type: string
+          enum: [above, below]
+        note:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, disabled]
 

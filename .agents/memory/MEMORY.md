@@ -1,0 +1,1 @@
+- [Aurum Watch price feeds](aurum-watch-price-feeds.md) — free no-key APIs used for gold/silver/forex data; useful if extending or debugging price accuracy.

@@ -10,7 +10,42 @@ import { BrandLogo } from "@/components/brand-logo";
 import { PricingDialog } from "@/components/pricing-dialog";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { Button } from "@/components/ui/button";
-import { Settings2 } from "lucide-react";
+import { Settings2, MessageCircle } from "lucide-react";
+
+/**
+ * Floating, circular "Contact Admin to Upgrade" chat-bubble button, fixed to
+ * the bottom-right corner of the viewport. Shared by both trial states below
+ * (active vs expired) so there is exactly one upgrade entry point on screen,
+ * independent of scroll position. `env(safe-area-inset-bottom/right)` keeps
+ * it clear of home-indicator/notch areas on mobile.
+ */
+function UpgradeBubble({
+  urgent,
+  onClick,
+}: {
+  urgent: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Contact admin to upgrade"
+      title="Contact Admin to Upgrade"
+      style={{
+        bottom: "calc(1.25rem + env(safe-area-inset-bottom))",
+        right: "calc(1.25rem + env(safe-area-inset-right))",
+      }}
+      className={`fixed z-40 h-14 w-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 ${
+        urgent
+          ? "bg-primary text-black shadow-primary/50 animate-siren"
+          : "bg-card border border-primary/40 text-primary shadow-black/40 hover:bg-primary/10"
+      }`}
+    >
+      <MessageCircle className="h-6 w-6" />
+    </button>
+  );
+}
 
 function TrialBanner() {
   const [pricingOpen, setPricingOpen] = useState(false);
@@ -24,18 +59,12 @@ function TrialBanner() {
     return (
       <>
         <PricingDialog open={pricingOpen} onOpenChange={setPricingOpen} />
-        <div className="bg-primary/10 border border-primary/30 rounded-sm px-4 py-3 flex items-center justify-between text-sm font-mono">
+        <div className="bg-primary/10 border border-primary/30 rounded-sm px-4 py-3 text-sm font-mono">
           <span className="text-primary">
             FREE TRIAL — {account.daysRemaining} day{account.daysRemaining === 1 ? "" : "s"} remaining
           </span>
-          <button
-            type="button"
-            onClick={() => setPricingOpen(true)}
-            className="uppercase tracking-wide text-primary underline underline-offset-2 hover:text-primary/80"
-          >
-            Contact Admin to Upgrade
-          </button>
         </div>
+        <UpgradeBubble urgent={false} onClick={() => setPricingOpen(true)} />
       </>
     );
   }
@@ -43,18 +72,12 @@ function TrialBanner() {
   return (
     <>
       <PricingDialog open={pricingOpen} onOpenChange={setPricingOpen} />
-      <div className="bg-red-950/60 border border-red-800 rounded-sm px-4 py-3 flex items-center justify-between text-sm font-mono">
+      <div className="bg-red-950/60 border border-red-800 rounded-sm px-4 py-3 text-sm font-mono">
         <span className="text-red-200">
           Your free trial has ended — new alerts are locked
         </span>
-        <button
-          type="button"
-          onClick={() => setPricingOpen(true)}
-          className="uppercase tracking-wide bg-primary text-black px-3 py-1.5 rounded-sm hover:bg-primary/90"
-        >
-          Contact Admin to Upgrade to Premium
-        </button>
       </div>
+      <UpgradeBubble urgent={true} onClick={() => setPricingOpen(true)} />
     </>
   );
 }
@@ -62,6 +85,8 @@ function TrialBanner() {
 export default function TrackerDashboard() {
   const { user } = useUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [presetAsset, setPresetAsset] = useState<string | undefined>(undefined);
   const { data: prices } = useGetPrices({
     query: {
       queryKey: getGetPricesQueryKey(),
@@ -92,7 +117,6 @@ export default function TrackerDashboard() {
                 {user.primaryEmailAddress.emailAddress}
               </span>
             )}
-            <CreateAlertDialog />
             <Button
               type="button"
               variant="ghost"
@@ -110,8 +134,25 @@ export default function TrackerDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        <TrialBanner />
-        <LivePrices prices={prices} />
+        <div className="space-y-4">
+          <TrialBanner />
+          <div className="sm:w-auto">
+            <CreateAlertDialog />
+          </div>
+        </div>
+        <LivePrices
+          prices={prices}
+          onSelectAsset={(symbol) => {
+            setPresetAsset(symbol);
+            setAlertDialogOpen(true);
+          }}
+        />
+        <CreateAlertDialog
+          open={alertDialogOpen}
+          onOpenChange={setAlertDialogOpen}
+          presetAssetSymbol={presetAsset}
+          hideTrigger
+        />
         <AlertsList />
       </main>
     </div>

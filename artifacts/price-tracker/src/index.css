@@ -45,10 +45,16 @@
   --radius-xl: calc(var(--radius) + 4px);
   
   --animate-siren: siren 1s ease-in-out infinite;
-  
+  --animate-float: float 5s ease-in-out infinite;
+
   @keyframes siren {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.8; transform: scale(1.02); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-7px); }
   }
 
 }
@@ -87,6 +93,7 @@
 
   --app-font-sans: 'Plus Jakarta Sans', sans-serif;
   --app-font-mono: 'Space Mono', monospace;
+  --app-font-premium: 'Sora', 'Plus Jakarta Sans', sans-serif;
   
   --radius: 0.3rem;
 }
@@ -123,5 +130,37 @@
     -webkit-background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
+  }
+
+  /* Exclusive, premium look for the primary "NEW ALERT" call-to-action:
+     a distinct display font (kept separate from the app's mono/sans fonts)
+     plus a warm gold drop-shadow that lifts it off the background. */
+  .btn-premium {
+    font-family: var(--app-font-premium);
+    box-shadow:
+      0 10px 24px -6px hsl(43 96% 58% / 0.55),
+      0 2px 6px -1px hsl(43 96% 58% / 0.4);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .btn-premium:hover {
+    box-shadow:
+      0 14px 32px -6px hsl(43 96% 58% / 0.65),
+      0 4px 10px -1px hsl(43 96% 58% / 0.5);
+    transform: translateY(-1px);
+  }
+  .btn-premium:active {
+    transform: translateY(0);
+  }
+
+  /* Organic "cloud" blob shape for the compact market cards, plus a soft
+     ambient shadow so they read as gently floating above the background. */
+  .card-cloud {
+    border-radius: 62% 38% 55% 45% / 48% 45% 55% 52%;
+    box-shadow:
+      0 12px 24px -10px hsl(240 10% 2% / 0.55),
+      0 2px 8px -2px hsl(240 10% 2% / 0.4);
+  }
+  .card-cloud:hover {
+    border-radius: 45% 55% 40% 60% / 55% 40% 60% 45%;
   }
 }

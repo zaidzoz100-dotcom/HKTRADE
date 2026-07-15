@@ -46,8 +46,23 @@ const formSchema = z.object({
   note: z.string().optional(),
 });
 
-export function CreateAlertDialog() {
-  const [open, setOpen] = useState(false);
+export function CreateAlertDialog({
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+  presetAssetSymbol,
+  hideTrigger = false,
+}: {
+  /** Pass to drive the dialog from elsewhere (e.g. clicking a market card). Omit to use the built-in "NEW ALERT" trigger. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Pre-selects an asset when the dialog is opened externally. */
+  presetAssetSymbol?: string;
+  /** Hide the built-in trigger button, when this dialog is only opened externally. */
+  hideTrigger?: boolean;
+} = {}) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = setControlledOpen ?? setUncontrolledOpen;
   const [blockedOpen, setBlockedOpen] = useState(false);
   const queryClient = useQueryClient();
   const createAlert = useCreateAlert();
@@ -64,6 +79,14 @@ export function CreateAlertDialog() {
       note: "",
     },
   });
+
+  // Re-sync the asset field whenever this dialog is (re)opened with a preset
+  // asset — e.g. the user clicked a specific market card.
+  React.useEffect(() => {
+    if (open && presetAssetSymbol) {
+      form.setValue("assetSymbol", presetAssetSymbol);
+    }
+  }, [open, presetAssetSymbol]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Arm audio context if not already done, since creating an alert indicates intent to hear it later
@@ -105,16 +128,32 @@ export function CreateAlertDialog() {
     }
   }
 
+  // Guard external open requests (e.g. clicking a market card) the same way
+  // the built-in trigger does: redirect to the upgrade prompt instead of
+  // silently doing nothing when the account can't create alerts.
+  React.useEffect(() => {
+    if (open && !canCreateAlerts) {
+      setOpen(false);
+      setBlockedOpen(true);
+    }
+  }, [open, canCreateAlerts]);
+
   return (
     <>
     <SubscriptionRequiredDialog open={blockedOpen} onOpenChange={setBlockedOpen} />
     <Dialog open={open && canCreateAlerts} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button onClick={handleTriggerClick}>
-          {canCreateAlerts ? <BellPlus className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
-          NEW ALERT
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button
+            onClick={handleTriggerClick}
+            size="lg"
+            className="btn-premium font-extrabold tracking-wide text-base px-6 w-full sm:w-auto"
+          >
+            {canCreateAlerts ? <BellPlus className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
+            NEW ALERT
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px] border-primary/20">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase tracking-wider text-primary flex items-center gap-2">

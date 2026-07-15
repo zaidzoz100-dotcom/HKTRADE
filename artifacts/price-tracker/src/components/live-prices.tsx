@@ -2,10 +2,17 @@ import React, { useEffect, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ArrowDownRight, ArrowUpRight, Activity, Clock } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Activity, Clock, Target } from "lucide-react";
 import type { PriceSnapshot } from "@workspace/api-client-react";
 
-export function LivePrices({ prices }: { prices: PriceSnapshot | undefined }) {
+export function LivePrices({
+  prices,
+  onSelectAsset,
+}: {
+  prices: PriceSnapshot | undefined;
+  /** Called with the asset symbol when a market card is clicked, to open the "Set Price Target" dialog pre-filled for that asset. */
+  onSelectAsset?: (symbol: string) => void;
+}) {
   const [prevPrices, setPrevPrices] = useState<Record<string, number>>({});
   const lastUpdatedAt = useRef<string | null>(null);
 
@@ -27,17 +34,9 @@ export function LivePrices({ prices }: { prices: PriceSnapshot | undefined }) {
 
   if (!prices) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 bg-muted rounded w-1/2"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-muted rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-muted rounded w-1/4"></div>
-            </CardContent>
-          </Card>
+          <div key={i} className="card-cloud animate-pulse w-32 h-32 sm:w-36 sm:h-36 bg-card border border-border" />
         ))}
       </div>
     );
@@ -62,57 +61,67 @@ export function LivePrices({ prices }: { prices: PriceSnapshot | undefined }) {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {allAssets.map((asset) => {
+      <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+        {allAssets.map((asset, i) => {
           const prevPrice = prevPrices[asset.symbol];
           const hasChanged = prevPrice !== undefined && prevPrice !== asset.price;
           const isUp = hasChanged && asset.price > prevPrice;
           const isDown = hasChanged && asset.price < prevPrice;
 
           return (
-            <Card key={asset.symbol} className="overflow-hidden bg-card border-border">
-              <CardContent className="p-4 relative">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-mono font-bold text-muted-foreground">{asset.symbol}</span>
-                  {!asset.isForex && <span className="text-xs text-muted-foreground font-mono">{asset.name}</span>}
-                </div>
-                
-                <div className={cn(
-                  "flex items-center text-2xl font-mono tracking-tighter transition-colors duration-500",
-                  isUp ? "text-green-500" : isDown ? "text-destructive" : "text-foreground"
-                )}>
-                  {asset.isForex ? asset.price.toFixed(5) : asset.price.toFixed(2)}
-                </div>
-                
-                <div className="flex items-center gap-1 mt-2 h-4">
-                  {hasChanged && (
-                    <>
-                      {isUp ? (
-                        <ArrowUpRight className="h-3 w-3 text-green-500" />
-                      ) : (
-                        <ArrowDownRight className="h-3 w-3 text-destructive" />
-                      )}
-                      <span className={cn(
-                        "text-xs font-mono",
-                        isUp ? "text-green-500" : "text-destructive"
-                      )}>
-                        {Math.abs(asset.price - prevPrice).toFixed(asset.isForex ? 5 : 2)}
-                      </span>
-                    </>
-                  )}
-                </div>
-                
-                {/* Visual flash on update */}
+            <button
+              key={asset.symbol}
+              type="button"
+              onClick={() => onSelectAsset?.(asset.symbol)}
+              title={`Set a price target for ${asset.name}`}
+              style={{ animationDelay: `${i * 0.4}s` }}
+              className="card-cloud animate-float group relative w-32 h-32 sm:w-36 sm:h-36 shrink-0 bg-card border border-border p-4 flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer transition-[border-radius,transform,border-color] duration-300 hover:scale-105 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="font-mono font-bold text-xs text-muted-foreground">{asset.symbol}</span>
+
+              <div className={cn(
+                "flex items-center justify-center text-lg sm:text-xl font-mono tracking-tighter transition-colors duration-500 mt-1",
+                isUp ? "text-green-500" : isDown ? "text-destructive" : "text-foreground"
+              )}>
+                {asset.isForex ? asset.price.toFixed(5) : asset.price.toFixed(2)}
+              </div>
+
+              <div className="flex items-center gap-1 mt-1 h-4">
                 {hasChanged && (
-                  <div className={cn(
-                    "absolute inset-0 opacity-10 pointer-events-none animate-in fade-in duration-500 zoom-out",
-                    isUp ? "bg-green-500" : "bg-destructive"
-                  )} onAnimationEnd={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}/>
+                  <>
+                    {isUp ? (
+                      <ArrowUpRight className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3 text-destructive" />
+                    )}
+                    <span className={cn(
+                      "text-[10px] font-mono",
+                      isUp ? "text-green-500" : "text-destructive"
+                    )}>
+                      {Math.abs(asset.price - prevPrice).toFixed(asset.isForex ? 5 : 2)}
+                    </span>
+                  </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+
+              {/* Hover affordance hinting the card is clickable to set a target */}
+              <div className="absolute inset-0 flex items-center justify-center bg-background/90 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-200 pointer-events-none">
+                <span className="flex items-center gap-1 text-[11px] font-mono uppercase tracking-wide text-primary">
+                  <Target className="h-3.5 w-3.5" />
+                  Set Target
+                </span>
+              </div>
+
+              {/* Visual flash on update */}
+              {hasChanged && (
+                <div className={cn(
+                  "absolute inset-0 opacity-10 pointer-events-none animate-in fade-in duration-500 zoom-out",
+                  isUp ? "bg-green-500" : "bg-destructive"
+                )} onAnimationEnd={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}/>
+              )}
+            </button>
           );
         })}
       </div>

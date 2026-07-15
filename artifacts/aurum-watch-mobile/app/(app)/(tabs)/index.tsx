@@ -14,7 +14,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLivePrices } from '@/hooks/useLivePrices';
 import { CreateAlertSheet } from '@/components/CreateAlertSheet';
 import { UpgradeSheet } from '@/components/UpgradeSheet';
-import { NotificationControlCenter } from '@/components/NotificationControlCenter';
+import { NotificationStatusCards } from '@/components/NotificationStatusCards';
 
 type PriceAsset = { symbol: string; name: string; price: number; category: 'metal' | 'forex' | 'crypto' };
 
@@ -137,7 +137,7 @@ export default function DashboardScreen() {
         </View>
       )}
 
-      <NotificationControlCenter />
+      <NotificationStatusCards />
 
       <View style={styles.headerRow}>
         <Text style={styles.sectionTitle}>Live Markets</Text>
@@ -156,25 +156,6 @@ export default function DashboardScreen() {
       </View>
 
       <PriceGrid assets={visibleAssets} onSelectAsset={handleSelectAsset} />
-
-      <Pressable
-        style={({ pressed }) => [styles.newAlertButton, pressed && styles.pressed]}
-        onPress={() => {
-          if (!canCreateAlerts) {
-            setUpgradeOpen(true);
-            return;
-          }
-          setPresetAsset(undefined);
-          setAlertOpen(true);
-        }}
-      >
-        <Ionicons
-          name={canCreateAlerts ? 'add-circle' : 'lock-closed'}
-          size={18}
-          color={colors.primaryForeground}
-        />
-        <Text style={styles.newAlertButtonText}>New Alert</Text>
-      </Pressable>
 
       <CreateAlertSheet
         visible={alertOpen}
@@ -243,20 +224,6 @@ function createDashboardStyles(colors: ReturnType<typeof useColors>) {
     cardSymbol: { color: '#60a5fa', fontFamily: 'Inter_700Bold', fontSize: 11 },
     cardPrice: { color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 16 },
     cardName: { color: colors.mutedForeground, fontFamily: 'Inter_400Regular', fontSize: 9 },
-    newAlertButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      backgroundColor: colors.primary,
-      borderRadius: colors.radius,
-      paddingVertical: 14,
-    },
-    newAlertButtonText: {
-      color: colors.primaryForeground,
-      fontFamily: 'Inter_700Bold',
-      fontSize: 15,
-    },
     pressed: { opacity: 0.85 },
   });
 }

@@ -34,10 +34,15 @@ async function readPermissionStatus(): Promise<PushPermissionStatus> {
  * push subscription flow but for Expo push tokens. Additive to the
  * existing web push system — does not touch it.
  */
+// Module-level flag so any component can read whether at least one
+// registration has succeeded this app session, without needing a context.
+let _sessionRegistered = false;
+
 export function usePushRegistration(enabled: boolean) {
   const registerToken = useRegisterExpoPushToken();
   const unregisterToken = useUnregisterExpoPushToken();
   const registeredToken = useRef<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState<boolean>(_sessionRegistered);
 
   const register = useCallback(async () => {
     if (Platform.OS === 'web' || !Device.isDevice) return;
@@ -61,6 +66,8 @@ export function usePushRegistration(enabled: boolean) {
     );
     registeredToken.current = tokenResponse.data;
     registerToken.mutate({ data: { token: tokenResponse.data } });
+    _sessionRegistered = true;
+    setIsRegistered(true);
   }, [registerToken]);
 
   useEffect(() => {
@@ -72,10 +79,12 @@ export function usePushRegistration(enabled: boolean) {
     if (registeredToken.current) {
       unregisterToken.mutate({ data: { token: registeredToken.current } });
       registeredToken.current = null;
+      _sessionRegistered = false;
+      setIsRegistered(false);
     }
   }, [unregisterToken]);
 
-  return { unregister, register };
+  return { unregister, register, isRegistered };
 }
 
 /**

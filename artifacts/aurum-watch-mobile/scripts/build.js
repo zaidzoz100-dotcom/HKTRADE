@@ -57,20 +57,28 @@ function stripProtocol(domain) {
 }
 
 function getDeploymentDomain() {
-  if (process.env.REPLIT_INTERNAL_APP_DOMAIN) {
-    return stripProtocol(process.env.REPLIT_INTERNAL_APP_DOMAIN);
-  }
-
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    return stripProtocol(process.env.REPLIT_DEV_DOMAIN);
+  // PRODUCTION_DOMAIN always wins — set this to your custom domain (e.g. hktrade.vip)
+  // so production builds never bake in the .replit.app subdomain.
+  if (process.env.PRODUCTION_DOMAIN) {
+    return stripProtocol(process.env.PRODUCTION_DOMAIN);
   }
 
   if (process.env.EXPO_PUBLIC_DOMAIN) {
     return stripProtocol(process.env.EXPO_PUBLIC_DOMAIN);
   }
 
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    return stripProtocol(process.env.REPLIT_DEV_DOMAIN);
+  }
+
+  // Fall back to REPLIT_INTERNAL_APP_DOMAIN last — it resolves to the
+  // .replit.app deployment subdomain, which differs from any custom domain.
+  if (process.env.REPLIT_INTERNAL_APP_DOMAIN) {
+    return stripProtocol(process.env.REPLIT_INTERNAL_APP_DOMAIN);
+  }
+
   console.error(
-    'ERROR: No deployment domain found. Set REPLIT_INTERNAL_APP_DOMAIN, REPLIT_DEV_DOMAIN, or EXPO_PUBLIC_DOMAIN',
+    'ERROR: No deployment domain found. Set PRODUCTION_DOMAIN, EXPO_PUBLIC_DOMAIN, REPLIT_DEV_DOMAIN, or REPLIT_INTERNAL_APP_DOMAIN',
   );
   process.exit(1);
 }
@@ -479,6 +487,18 @@ function updateBundleUrls(timestamp, baseUrl) {
   console.log('Updated bundle URLs');
 }
 
+function rewriteLocalhostUrl(value, baseUrl, timestamp) {
+  if (typeof value !== 'string') return value;
+  // Metro dev-server asset URLs look like:
+  //   http://127.0.0.1:8081/assets/./assets/images/icon.png
+  // Rewrite them to the production path:
+  //   https://<domain>/mobile/<timestamp>/_expo/static/js/assets/images/icon.png
+  return value.replace(
+    /https?:\/\/127\.0\.0\.1:\d+\/assets\/\.?\//g,
+    `${baseUrl}${basePath}/${timestamp}/_expo/static/js/assets/`,
+  );
+}
+
 function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
   const updateForPlatform = (platform, manifest) => {
     if (!manifest.launchAsset || !manifest.extra) {
@@ -490,11 +510,29 @@ function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
     manifest.createdAt = new Date(
       Number(timestamp.split('-')[0]),
     ).toISOString();
-    manifest.extra.expoClient.hostUri =
-      baseUrl.replace('https://', '') + '/' + platform;
+
+    const client = manifest.extra.expoClient;
+    client.hostUri = baseUrl.replace('https://', '') + '/' + platform;
     manifest.extra.expoGo.debuggerHost =
       baseUrl.replace('https://', '') + '/' + platform;
     manifest.extra.expoGo.packagerOpts.dev = false;
+
+    // Rewrite all localhost Metro image URLs so Expo Go can actually fetch
+    // the splash screen and icon assets from the production server.
+    if (client.iconUrl) {
+      client.iconUrl = rewriteLocalhostUrl(client.iconUrl, baseUrl, timestamp);
+    }
+    if (client.splash?.imageUrl) {
+      client.splash.imageUrl = rewriteLocalhostUrl(client.splash.imageUrl, baseUrl, timestamp);
+    }
+    if (client.android?.adaptiveIcon?.foregroundImageUrl) {
+      client.android.adaptiveIcon.foregroundImageUrl = rewriteLocalhostUrl(
+        client.android.adaptiveIcon.foregroundImageUrl, baseUrl, timestamp,
+      );
+    }
+    if (client.ios?.icon?.url) {
+      client.ios.icon.url = rewriteLocalhostUrl(client.ios.icon.url, baseUrl, timestamp);
+    }
 
     if (manifest.assets && manifest.assets.length > 0) {
       manifest.assets.forEach((asset) => {

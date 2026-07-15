@@ -1,11 +1,11 @@
 {
-  "id": "c5e6867a-6a85-468b-b619-c97a77d455bd",
-  "createdAt": "2026-07-15T22:15:27.509Z",
+  "id": "d5268907-a16d-4b22-a7f1-8cdf323e9b3d",
+  "createdAt": "2026-07-15T23:21:24.106Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1784153727509-8074",
+    "key": "bundle-1784157684106-925",
     "contentType": "application/javascript",
-    "url": "https://hktrade.vip/mobile/1784153727509-8074/_expo/static/js/android/bundle.js"
+    "url": "https://hktrade.vip/mobile/1784157684106-925/_expo/static/js/android/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -26,7 +26,7 @@
         "image": "./assets/images/icon.png",
         "resizeMode": "contain",
         "backgroundColor": "#09090b",
-        "imageUrl": "http://127.0.0.1:8081/assets/./assets/images/icon.png"
+        "imageUrl": "https://hktrade.vip/mobile/1784157684106-925/_expo/static/js/assets/assets/images/icon.png"
       },
       "ios": {
         "supportsTablet": false
@@ -37,7 +37,7 @@
         "adaptiveIcon": {
           "foregroundImage": "./assets/images/adaptive-icon-foreground.png",
           "backgroundColor": "#09090b",
-          "foregroundImageUrl": "http://127.0.0.1:8081/assets/./assets/images/adaptive-icon-foreground.png"
+          "foregroundImageUrl": "https://hktrade.vip/mobile/1784157684106-925/_expo/static/js/assets/assets/images/adaptive-icon-foreground.png"
         }
       },
       "web": {
@@ -104,7 +104,7 @@
         "android",
         "web"
       ],
-      "iconUrl": "http://127.0.0.1:8081/assets/./assets/images/icon.png",
+      "iconUrl": "https://hktrade.vip/mobile/1784157684106-925/_expo/static/js/assets/assets/images/icon.png",
       "hostUri": "hktrade.vip/android"
     },
     "expoGo": {
@@ -118,6 +118,6 @@
       },
       "mainModuleName": "node_modules/.pnpm/expo-router@6.0.24_@types+react-dom@19.1.11_@types+react@19.1.17__@types+react@19.1.17__c289c0218f446f5969794daa94e36b65/node_modules/expo-router/entry"
     },
-    "scopeKey": "@anonymous/aurum-watch-mobile-1e6537ed-2541-484c-97d8-428d19942ee9"
+    "scopeKey": "@anonymous/aurum-watch-mobile-8dcb0e04-6ca7-4c4e-873d-bbc12646bcee"
   }
 }

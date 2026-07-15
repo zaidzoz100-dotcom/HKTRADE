@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, alertsTable } from "@workspace/db";
 import {
   CreateAlertBody,
@@ -12,22 +12,32 @@ import {
   UpdateAlertResponse,
   AcknowledgeAlertResponse,
 } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/requireAuth";
+import { ensureUser, computeAccountStatus, CONTACT_ADMIN_URL } from "../lib/account";
 
 const router: IRouter = Router();
 
-router.get("/alerts", async (_req, res): Promise<void> => {
+router.use(requireAuth);
+
+router.get("/alerts", async (req, res): Promise<void> => {
   const alerts = await db
     .select()
     .from(alertsTable)
+    .where(eq(alertsTable.clerkUserId, req.userId!))
     .orderBy(alertsTable.createdAt);
   res.json(ListAlertsResponse.parse(alerts));
 });
 
-router.get("/alerts/triggered", async (_req, res): Promise<void> => {
+router.get("/alerts/triggered", async (req, res): Promise<void> => {
   const alerts = await db
     .select()
     .from(alertsTable)
-    .where(eq(alertsTable.status, "triggered"));
+    .where(
+      and(
+        eq(alertsTable.clerkUserId, req.userId!),
+        eq(alertsTable.status, "triggered"),
+      ),
+    );
   res.json(ListAlertsResponse.parse(alerts));
 });
 
@@ -38,9 +48,21 @@ router.post("/alerts", async (req, res): Promise<void> => {
     return;
   }
 
+  const user = await ensureUser(req.userId!);
+  const { canCreateAlerts } = computeAccountStatus(user);
+  if (!canCreateAlerts) {
+    res.status(403).json({
+      error:
+        "Your free trial has ended. Upgrade to Premium to keep creating alerts.",
+      contactUrl: CONTACT_ADMIN_URL,
+    });
+    return;
+  }
+
   const [alert] = await db
     .insert(alertsTable)
     .values({
+      clerkUserId: req.userId!,
       assetSymbol: parsed.data.assetSymbol,
       assetLabel: parsed.data.assetLabel,
       targetPrice: parsed.data.targetPrice,
@@ -76,7 +98,12 @@ router.patch("/alerts/:id", async (req, res): Promise<void> => {
   const [alert] = await db
     .update(alertsTable)
     .set(update)
-    .where(eq(alertsTable.id, params.data.id))
+    .where(
+      and(
+        eq(alertsTable.id, params.data.id),
+        eq(alertsTable.clerkUserId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!alert) {
@@ -96,7 +123,12 @@ router.delete("/alerts/:id", async (req, res): Promise<void> => {
 
   const [alert] = await db
     .delete(alertsTable)
-    .where(eq(alertsTable.id, params.data.id))
+    .where(
+      and(
+        eq(alertsTable.id, params.data.id),
+        eq(alertsTable.clerkUserId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!alert) {
@@ -117,7 +149,12 @@ router.post("/alerts/:id/acknowledge", async (req, res): Promise<void> => {
   const [alert] = await db
     .update(alertsTable)
     .set({ status: "acknowledged", acknowledgedAt: new Date() })
-    .where(eq(alertsTable.id, params.data.id))
+    .where(
+      and(
+        eq(alertsTable.id, params.data.id),
+        eq(alertsTable.clerkUserId, req.userId!),
+      ),
+    )
     .returning();
 
   if (!alert) {

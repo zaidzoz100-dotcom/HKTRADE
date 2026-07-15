@@ -24,11 +24,21 @@ A live gold, silver, and forex price tracker with alarm-clock-style price alerts
 
 ## Where things live
 
-- `artifacts/price-tracker` — frontend (dashboard, alert creation, alarm overlay, Web Audio siren in `src/lib/audio-alarm.ts`)
+- `artifacts/price-tracker` — frontend (landing page, Clerk sign-in/sign-up, dashboard, alert creation, alarm overlay, Web Audio siren in `src/lib/audio-alarm.ts`)
 - `artifacts/api-server/src/lib/priceFeed.ts` — in-memory price cache, polls free public APIs every 20s, and evaluates active alerts against latest prices on each poll
-- `artifacts/api-server/src/routes/{prices,alerts}.ts` — REST endpoints
-- `lib/db/src/schema/alerts.ts` — `alerts` table (source of truth for alert data model)
+- `artifacts/api-server/src/lib/account.ts` — trial/premium status computation and JIT user provisioning
+- `artifacts/api-server/src/routes/{prices,alerts,account}.ts` — REST endpoints
+- `artifacts/api-server/src/middlewares/requireAuth.ts` — Clerk auth guard for `/api/account` and `/api/alerts/*`
+- `lib/db/src/schema/alerts.ts` — `alerts` table, scoped per user via `clerkUserId`
+- `lib/db/src/schema/users.ts` — `users` table (trial start date, premium flag)
 - `lib/api-spec/openapi.yaml` — API contract; run codegen after editing
+
+## Authentication & Subscription
+
+- Auth is Replit-managed Clerk (email/password + Google). Sign-in/sign-up are custom-themed pages at `/sign-in` and `/sign-up`; the dashboard lives at `/tracker`.
+- Each user gets a 4-day free trial starting from their first authenticated request (JIT-provisioned in `users.createdAt`). `GET /api/account` returns trial/premium status.
+- `POST /api/alerts` returns 403 with a `contactUrl` once the trial expires and the user isn't premium. The frontend shows a "Contact Admin to Upgrade to Premium" link to `https://t.me/hackedtrad` (Telegram) — this is the only upgrade path; there's no in-app payment flow.
+- Premium is currently only settable directly in the `users` table (`isPremium`, `premiumGrantedAt`) — no admin UI yet.
 
 ## Architecture decisions
 

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './accountStatus';
 export * from './alert';
 export * from './alertDirection';
 export * from './alertInput';
@@ -18,3 +19,4 @@ export * from './forexRate';
 export * from './healthStatus';
 export * from './metalPrice';
 export * from './priceSnapshot';
+export * from './subscriptionRequiredError';

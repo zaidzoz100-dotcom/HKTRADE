@@ -2,15 +2,43 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useCreateAlert, getListAlertsQueryKey, AlertInputDirection } from "@workspace/api-client-react";
+import { useCreateAlert, useGetAccount, getGetAccountQueryKey, getListAlertsQueryKey, AlertInputDirection } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BellPlus } from "lucide-react";
+import { BellPlus, Lock } from "lucide-react";
 import { audioAlarm } from "@/lib/audio-alarm";
+
+const CONTACT_ADMIN_URL = "https://t.me/hackedtrad";
+
+function SubscriptionRequiredDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[420px] border-primary/20">
+        <DialogHeader>
+          <DialogTitle className="font-mono uppercase tracking-wider text-primary flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Subscription Required
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground pt-2">
+          Your 4-day free trial has ended. Upgrade to Premium for unlimited, lifetime access to alerts.
+        </p>
+        <a
+          href={CONTACT_ADMIN_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center justify-center w-full font-mono uppercase tracking-widest text-sm bg-primary text-black py-3 rounded-sm hover:bg-primary/90"
+        >
+          Contact Admin to Upgrade to Premium
+        </a>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 const ASSETS = [
   { symbol: "XAU", label: "Gold (XAU)" },
@@ -29,8 +57,13 @@ const formSchema = z.object({
 
 export function CreateAlertDialog() {
   const [open, setOpen] = useState(false);
+  const [blockedOpen, setBlockedOpen] = useState(false);
   const queryClient = useQueryClient();
   const createAlert = useCreateAlert();
+  const { data: account } = useGetAccount({
+    query: { queryKey: getGetAccountQueryKey() },
+  });
+  const canCreateAlerts = account?.canCreateAlerts ?? true;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,16 +97,32 @@ export function CreateAlertDialog() {
           queryClient.invalidateQueries({ queryKey: getListAlertsQueryKey() });
           setOpen(false);
           form.reset();
-        }
+        },
+        onError: (error: any) => {
+          if (error?.response?.status === 403) {
+            setOpen(false);
+            setBlockedOpen(true);
+          }
+        },
       }
     );
   }
 
+  function handleTriggerClick(e: React.MouseEvent) {
+    audioAlarm.init();
+    if (!canCreateAlerts) {
+      e.preventDefault();
+      setBlockedOpen(true);
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+    <SubscriptionRequiredDialog open={blockedOpen} onOpenChange={setBlockedOpen} />
+    <Dialog open={open && canCreateAlerts} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button onClick={() => audioAlarm.init()}>
-          <BellPlus className="mr-2 h-4 w-4" />
+        <Button onClick={handleTriggerClick}>
+          {canCreateAlerts ? <BellPlus className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
           NEW ALERT
         </Button>
       </DialogTrigger>
@@ -185,5 +234,6 @@ export function CreateAlertDialog() {
         </Form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

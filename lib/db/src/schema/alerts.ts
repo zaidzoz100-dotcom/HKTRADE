@@ -10,6 +10,7 @@ import { z } from "zod/v4";
 
 export const alertsTable = pgTable("alerts", {
   id: serial("id").primaryKey(),
+  clerkUserId: text("clerk_user_id").notNull(),
   assetSymbol: text("asset_symbol").notNull(),
   assetLabel: text("asset_label").notNull(),
   targetPrice: doublePrecision("target_price").notNull(),
@@ -29,6 +30,7 @@ export const alertsTable = pgTable("alerts", {
 
 export const insertAlertSchema = createInsertSchema(alertsTable).omit({
   id: true,
+  clerkUserId: true,
   createdAt: true,
   triggeredAt: true,
   acknowledgedAt: true,

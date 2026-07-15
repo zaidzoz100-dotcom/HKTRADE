@@ -108,3 +108,17 @@ export interface AlertUpdate {
   status?: AlertUpdateStatus;
 }
 
+export interface AccountStatus {
+  isPremium: boolean;
+  trialStartedAt: string;
+  trialEndsAt: string;
+  /** Days left in the free trial, 0 if expired or premium */
+  daysRemaining: number;
+  canCreateAlerts: boolean;
+}
+
+export interface SubscriptionRequiredError {
+  error: string;
+  contactUrl: string;
+}
+

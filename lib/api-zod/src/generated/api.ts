@@ -37,6 +37,19 @@ export const GetPricesResponse = zod.object({
 
 
 /**
+ * Creates the account record on first call (JIT provisioning).
+ * @summary Get the current user's account and subscription status
+ */
+export const GetAccountResponse = zod.object({
+  "isPremium": zod.boolean(),
+  "trialStartedAt": zod.coerce.date(),
+  "trialEndsAt": zod.coerce.date(),
+  "daysRemaining": zod.number().describe('Days left in the free trial, 0 if expired or premium'),
+  "canCreateAlerts": zod.boolean()
+})
+
+
+/**
  * @summary List all alerts
  */
 export const ListAlertsResponseItem = zod.object({

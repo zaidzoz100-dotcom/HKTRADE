@@ -20,11 +20,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AccountStatus,
   Alert,
   AlertInput,
   AlertUpdate,
   HealthStatus,
-  PriceSnapshot
+  PriceSnapshot,
+  SubscriptionRequiredError
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -209,6 +211,84 @@ export function useGetPrices<TData = Awaited<ReturnType<typeof getPrices>>, TErr
 
 
 
+export const getGetAccountUrl = () => {
+
+
+
+
+  return `/api/account`
+}
+
+/**
+ * Creates the account record on first call (JIT provisioning).
+ * @summary Get the current user's account and subscription status
+ */
+export const getAccount = async ( options?: RequestInit): Promise<AccountStatus> => {
+
+  return customFetch<AccountStatus>(getGetAccountUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAccountQueryKey = () => {
+    return [
+    `/api/account`
+    ] as const;
+    }
+
+
+export const getGetAccountQueryOptions = <TData = Awaited<ReturnType<typeof getAccount>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccount>>> = ({ signal }) => getAccount({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAccountQueryResult = NonNullable<Awaited<ReturnType<typeof getAccount>>>
+export type GetAccountQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the current user's account and subscription status
+ */
+
+export function useGetAccount<TData = Awaited<ReturnType<typeof getAccount>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAccountQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getListAlertsUrl = () => {
 
 
@@ -312,7 +392,7 @@ export const createAlert = async (alertInput: AlertInput, options?: RequestInit)
 
 
 
-export const getCreateAlertMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateAlertMutationOptions = <TError = ErrorType<SubscriptionRequiredError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAlert>>, TError,{data: BodyType<AlertInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createAlert>>, TError,{data: BodyType<AlertInput>}, TContext> => {
 
@@ -341,12 +421,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateAlertMutationResult = NonNullable<Awaited<ReturnType<typeof createAlert>>>
     export type CreateAlertMutationBody = BodyType<AlertInput>
-    export type CreateAlertMutationError = ErrorType<unknown>
+    export type CreateAlertMutationError = ErrorType<SubscriptionRequiredError>
 
     /**
  * @summary Create a new price alert
  */
-export const useCreateAlert = <TError = ErrorType<unknown>,
+export const useCreateAlert = <TError = ErrorType<SubscriptionRequiredError>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAlert>>, TError,{data: BodyType<AlertInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof createAlert>>,

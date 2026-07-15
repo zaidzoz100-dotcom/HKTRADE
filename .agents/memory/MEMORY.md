@@ -1,1 +1,2 @@
 - [Aurum Watch price feeds](aurum-watch-price-feeds.md) — free no-key APIs used for gold/silver/forex data; useful if extending or debugging price accuracy.
+- [Aurum Watch auth & trial](aurum-watch-auth-trial.md) — Clerk auth + 4-day trial/premium gating model and where enforcement lives.

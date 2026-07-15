@@ -14,6 +14,8 @@ tags:
     description: Live gold, silver, and forex prices
   - name: alerts
     description: Custom price alerts
+  - name: account
+    description: Authenticated account and subscription status
 paths:
   /healthz:
     get:
@@ -40,6 +42,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PriceSnapshot"
+  /account:
+    get:
+      operationId: getAccount
+      tags: [account]
+      summary: Get the current user's account and subscription status
+      description: Creates the account record on first call (JIT provisioning).
+      responses:
+        "200":
+          description: Account status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountStatus"
+        "401":
+          description: Not authenticated
   /alerts:
     get:
       operationId: listAlerts
@@ -71,6 +88,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Alert"
+        "403":
+          description: Subscription required (trial expired and not premium)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionRequiredError"
   /alerts/triggered:
     get:
       operationId: listTriggeredAlerts
@@ -264,4 +287,34 @@ components:
         status:
           type: string
           enum: [active, disabled]
+    AccountStatus:
+      type: object
+      properties:
+        isPremium:
+          type: boolean
+        trialStartedAt:
+          type: string
+          format: date-time
+        trialEndsAt:
+          type: string
+          format: date-time
+        daysRemaining:
+          type: integer
+          description: "Days left in the free trial, 0 if expired or premium"
+        canCreateAlerts:
+          type: boolean
+      required:
+        - isPremium
+        - trialStartedAt
+        - trialEndsAt
+        - daysRemaining
+        - canCreateAlerts
+    SubscriptionRequiredError:
+      type: object
+      properties:
+        error:
+          type: string
+        contactUrl:
+          type: string
+      required: [error, contactUrl]
 

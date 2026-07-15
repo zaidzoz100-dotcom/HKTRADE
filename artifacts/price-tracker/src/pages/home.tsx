@@ -1,12 +1,14 @@
 import { useLocation } from 'wouter';
 import { BrandLogo } from '@/components/brand-logo';
 import { PremiumPlansSection } from '@/components/premium-plans-section';
+import { ScrollTintOverlay } from '@/components/scroll-tint-overlay';
 
 export default function Home() {
   const [, setLocation] = useLocation();
 
   return (
     <div className="min-h-[100dvh] text-foreground flex flex-col">
+      <ScrollTintOverlay />
       <header className="border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">

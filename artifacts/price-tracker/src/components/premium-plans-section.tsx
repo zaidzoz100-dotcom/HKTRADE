@@ -33,7 +33,7 @@ export function PremiumPlansSection() {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-6 items-stretch">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
         {/* Monthly Plan */}
         <div className="rounded-2xl border border-border bg-card/70 backdrop-blur-sm p-6 flex flex-col gap-5">
           <div>
@@ -42,6 +42,22 @@ export function PremiumPlansSection() {
               <span className="font-mono font-extrabold text-3xl text-primary">30 USDT</span>
               <span className="text-sm text-muted-foreground">/ month</span>
             </div>
+          </div>
+          <FeatureList />
+        </div>
+
+        {/* 2-Month Plan — popular */}
+        <div className="relative rounded-2xl border-2 border-emerald-400/70 bg-card/70 backdrop-blur-sm p-6 flex flex-col gap-5 shadow-[0_0_35px_rgba(52,211,153,0.3)]">
+          <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-400 text-black text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.6)] whitespace-nowrap">
+            Popular Choice
+          </span>
+          <div>
+            <h4 className="font-sans font-bold text-lg text-white">2-Month Plan</h4>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="font-mono font-extrabold text-3xl text-primary">40 USDT</span>
+              <span className="text-sm text-muted-foreground">/ 2 months</span>
+            </div>
+            <div className="text-xs text-emerald-400 font-semibold mt-1">Great deal — more days for less</div>
           </div>
           <FeatureList />
         </div>

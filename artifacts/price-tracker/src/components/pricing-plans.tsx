@@ -22,6 +22,13 @@ export function PricingPlans() {
           <span className="font-semibold text-sm">Monthly Plan</span>
           <span className="font-mono font-bold text-primary">30 USDT / month</span>
         </div>
+        <div className="flex items-center justify-between rounded-lg border border-emerald-400/50 bg-emerald-400/5 px-4 py-3">
+          <div>
+            <span className="font-semibold text-sm">2-Month Plan</span>
+            <div className="text-xs text-emerald-400 font-semibold">Popular choice</div>
+          </div>
+          <span className="font-mono font-bold text-primary">40 USDT / 2 months</span>
+        </div>
         <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/5 px-4 py-3">
           <div>
             <span className="font-semibold text-sm">Yearly Plan</span>

@@ -8,6 +8,9 @@ import { AlarmOverlay } from "@/components/alarm-overlay";
 import { LogoutButton } from "@/App";
 import { BrandLogo } from "@/components/brand-logo";
 import { PricingDialog } from "@/components/pricing-dialog";
+import { SettingsDialog } from "@/components/settings-dialog";
+import { Button } from "@/components/ui/button";
+import { Settings2 } from "lucide-react";
 
 function TrialBanner() {
   const [pricingOpen, setPricingOpen] = useState(false);
@@ -58,6 +61,7 @@ function TrialBanner() {
 
 export default function TrackerDashboard() {
   const { user } = useUser();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { data: prices } = useGetPrices({
     query: {
       queryKey: getGetPricesQueryKey(),
@@ -89,8 +93,19 @@ export default function TrackerDashboard() {
               </span>
             )}
             <CreateAlertDialog />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setSettingsOpen(true)}
+              className="h-9 w-9 text-muted-foreground hover:text-foreground"
+              aria-label="Alert settings"
+            >
+              <Settings2 className="h-4.5 w-4.5" />
+            </Button>
             <LogoutButton className="text-xs font-mono uppercase tracking-wide text-muted-foreground hover:text-foreground" />
           </div>
+          <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
         </div>
       </header>
 

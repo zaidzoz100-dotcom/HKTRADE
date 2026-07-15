@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useListTriggeredAlerts, useAcknowledgeAlert, getListTriggeredAlertsQueryKey, getListAlertsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { AlertOctagon, VolumeX } from "lucide-react";
 import { audioAlarm } from "@/lib/audio-alarm";
+import { getStoredRingtone } from "@/lib/settings";
+import { notificationService } from "@/lib/notifications";
 
 export function AlarmOverlay() {
   const queryClient = useQueryClient();
   const [hasInteracted, setHasInteracted] = useState(false);
+  const notifiedIdsRef = useRef<Set<number>>(new Set());
   
   // High frequency polling for triggered alerts
   const { data: triggeredAlerts } = useListTriggeredAlerts({
@@ -42,10 +45,10 @@ export function AlarmOverlay() {
     };
   }, []);
 
-  // Sync audio with alarm state
+  // Sync audio with alarm state, using the user's chosen ringtone
   useEffect(() => {
     if (isAlarming && hasInteracted) {
-      audioAlarm.play();
+      audioAlarm.play(getStoredRingtone());
     } else {
       audioAlarm.stop();
     }
@@ -54,6 +57,26 @@ export function AlarmOverlay() {
       audioAlarm.stop();
     };
   }, [isAlarming, hasInteracted]);
+
+  // Fire a native browser/mobile push notification for each newly triggered
+  // alert, so the user is alerted even if the tab is backgrounded.
+  useEffect(() => {
+    for (const alert of activeTriggers) {
+      if (!notifiedIdsRef.current.has(alert.id)) {
+        notifiedIdsRef.current.add(alert.id);
+        const direction = alert.direction === 'above' ? 'rose above' : 'dropped below';
+        notificationService.notify(
+          `${alert.assetSymbol} target hit!`,
+          `${alert.assetSymbol} ${direction} ${alert.targetPrice}`,
+        );
+      }
+    }
+    // Clean up ids no longer active so a future re-trigger can notify again.
+    const activeIds = new Set(activeTriggers.map((a) => a.id));
+    for (const id of Array.from(notifiedIdsRef.current)) {
+      if (!activeIds.has(id)) notifiedIdsRef.current.delete(id);
+    }
+  }, [activeTriggers]);
 
   const handleAcknowledge = (id: number) => {
     acknowledgeAlert.mutate(

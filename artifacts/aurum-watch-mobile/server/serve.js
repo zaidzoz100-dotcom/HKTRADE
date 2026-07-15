@@ -91,7 +91,16 @@ function serveStaticFile(urlPath, res) {
     return;
   }
 
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+  let stat;
+  try {
+    stat = fs.statSync(filePath);
+  } catch {
+    res.writeHead(404);
+    res.end('Not Found');
+    return;
+  }
+
+  if (stat.isDirectory()) {
     res.writeHead(404);
     res.end('Not Found');
     return;
@@ -99,9 +108,25 @@ function serveStaticFile(urlPath, res) {
 
   const ext = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-  const content = fs.readFileSync(filePath);
-  res.writeHead(200, { 'content-type': contentType });
-  res.end(content);
+
+  // Stream the file so the client receives Content-Length and the connection
+  // closes cleanly after the last byte — essential for Expo Go's OTA downloader
+  // which hangs indefinitely if it never sees end-of-response.
+  res.writeHead(200, {
+    'content-type': contentType,
+    'content-length': stat.size,
+    'cache-control': 'public, max-age=31536000, immutable',
+  });
+
+  const stream = fs.createReadStream(filePath);
+  stream.on('error', (err) => {
+    console.error('Stream error for', filePath, err.message);
+    if (!res.headersSent) {
+      res.writeHead(500);
+    }
+    res.end();
+  });
+  stream.pipe(res);
 }
 
 const landingPageTemplate = fs.readFileSync(TEMPLATE_PATH, 'utf-8');

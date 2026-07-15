@@ -21,6 +21,10 @@ export const alertsTable = pgTable("alerts", {
     .notNull()
     .default("active"),
   note: text("note"),
+  // Price of the asset at the moment the alert was created. Used to verify
+  // a true price *crossing* before triggering — prevents false positives when
+  // the target is set at or very near the live price.
+  baselinePrice: doublePrecision("baseline_price"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -21,22 +21,33 @@ import { getSnapshotOrFetch } from "../lib/priceFeed";
  * should just fire whenever the price reaches the target, from either side.
  * We derive the direction we store from where the price currently sits
  * relative to the target: if the target is above the current price, the
- * price needs to rise to reach it ("above"); if it's below, the price needs
- * to fall ("below"). Ties default to "above". This keeps the existing
- * threshold-crossing logic in priceFeed.ts untouched.
+ * price needs to rise to reach it ("above"); if it's below or equal, the
+ * price needs to fall ("below").
+ *
+ * We also return the live price as `baselinePrice` so the caller can persist
+ * it alongside the alert. checkAlerts uses it to require a genuine crossing
+ * (i.e. price was on the opposite side of the target at creation time) before
+ * firing, which prevents immediate false-positive triggers when the target is
+ * set at or very near the current price.
  */
-async function inferDirection(
+async function inferDirectionAndBaseline(
   assetSymbol: string,
   targetPrice: number,
-): Promise<"above" | "below"> {
+): Promise<{ direction: "above" | "below"; baselinePrice: number | null }> {
   const snapshot = await getSnapshotOrFetch();
   const currentPrice =
     snapshot.metals.find((m) => m.symbol === assetSymbol)?.price ??
     snapshot.forex.find((f) => f.pair === assetSymbol)?.rate ??
+    snapshot.crypto.find((c) => c.symbol === assetSymbol)?.price ??
     null;
 
-  if (currentPrice === null) return "above";
-  return targetPrice < currentPrice ? "below" : "above";
+  if (currentPrice === null) return { direction: "above", baselinePrice: null };
+  // Use strict < so that target == current → "below", meaning the price must
+  // rise away from the target and then fall back to it (or fall further) before
+  // triggering. This prevents an immediate fire when the target equals the
+  // live price.
+  const direction = targetPrice < currentPrice ? "below" : "above";
+  return { direction, baselinePrice: currentPrice };
 }
 
 const router: IRouter = Router();
@@ -83,7 +94,7 @@ router.post("/alerts", async (req, res): Promise<void> => {
     return;
   }
 
-  const direction = await inferDirection(
+  const { direction, baselinePrice } = await inferDirectionAndBaseline(
     parsed.data.assetSymbol,
     parsed.data.targetPrice,
   );
@@ -96,6 +107,7 @@ router.post("/alerts", async (req, res): Promise<void> => {
       assetLabel: parsed.data.assetLabel,
       targetPrice: parsed.data.targetPrice,
       direction,
+      baselinePrice,
       note: parsed.data.note ?? null,
     })
     .returning();

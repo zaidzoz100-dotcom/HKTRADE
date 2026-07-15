@@ -152,10 +152,27 @@ async function checkAlerts(metals: MetalPrice[], forex: ForexRate[], crypto: Cry
     const currentPrice = priceForSymbol(alert.assetSymbol, metals, forex, crypto);
     if (currentPrice === null) continue;
 
-    const shouldTrigger =
+    // Require a genuine price crossing before triggering. When baselinePrice
+    // is stored (all new alerts), the price must have been on the opposite
+    // side of the target at creation time. This prevents false positives when
+    // a target is set at or very near the live price — without this check the
+    // alert would fire on the very next poll tick.
+    //
+    // Legacy alerts (null baselinePrice) fall back to the original positional
+    // check so existing saved alerts are not silently broken.
+    const priceNowOnTargetSide =
       alert.direction === "above"
         ? currentPrice >= alert.targetPrice
         : currentPrice <= alert.targetPrice;
+
+    const crossingConfirmed =
+      alert.baselinePrice === null
+        ? true // legacy alert — no baseline, use old behaviour
+        : alert.direction === "above"
+          ? alert.baselinePrice < alert.targetPrice
+          : alert.baselinePrice > alert.targetPrice;
+
+    const shouldTrigger = priceNowOnTargetSide && crossingConfirmed;
 
     if (shouldTrigger) {
       const [updated] = await db

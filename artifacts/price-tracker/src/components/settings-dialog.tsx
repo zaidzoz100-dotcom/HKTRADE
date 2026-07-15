@@ -287,7 +287,14 @@ export function SettingsDialog({
             <p className="text-xs text-muted-foreground">
               Keep getting alerts even after you fully close Forex Alarm or your browser. On iPhone, add Forex Alarm to your Home Screen first (Share → Add to Home Screen) — Safari only delivers push to installed apps.
             </p>
-            {!isPushSupported() ? (
+            {isIOS && !installed ? (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                <Share className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Install Forex Alarm to your Home Screen first (Share → Add to Home Screen) — iPhone won't deliver background push to a Safari tab.
+                </span>
+              </div>
+            ) : !isPushSupported() ? (
               <p className="text-xs text-muted-foreground">
                 Background push isn't supported in this browser.
               </p>

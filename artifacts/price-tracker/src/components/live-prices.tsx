@@ -77,7 +77,7 @@ export function LivePrices({
               style={{ animationDelay: `${i * 0.4}s` }}
               className="card-cloud animate-float group relative w-full aspect-square max-w-[9.5rem] mx-auto bg-card border border-border p-2 sm:p-4 flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer transition-[border-radius,transform,border-color] duration-300 hover:scale-105 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <span className="font-mono font-bold text-xs text-muted-foreground">{asset.symbol}</span>
+              <span className="font-mono font-bold text-xs text-blue-400">{asset.symbol}</span>
 
               <div className={cn(
                 "flex items-center justify-center text-lg sm:text-xl font-mono tracking-tighter transition-colors duration-500 mt-1",

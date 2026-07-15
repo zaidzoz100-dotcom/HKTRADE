@@ -60,10 +60,10 @@ export function AlertsList() {
 
   if (!alerts || alerts.length === 0) {
     return (
-      <Card className="border-dashed border-muted">
-        <CardContent className="h-48 flex flex-col items-center justify-center text-muted-foreground gap-4">
-          <Bell className="h-8 w-8 opacity-20" />
-          <p className="font-mono text-sm tracking-widest uppercase">No active tracking signals</p>
+      <Card className="border-dashed border-red-800/40 bg-red-950/30">
+        <CardContent className="h-48 flex flex-col items-center justify-center gap-4 animate-breathing">
+          <Bell className="h-8 w-8 text-amber-400 animate-bell-ring" style={{ transformOrigin: "top center" }} />
+          <p className="font-mono text-sm tracking-widest uppercase text-red-200/80">No active tracking signals</p>
         </CardContent>
       </Card>
     );

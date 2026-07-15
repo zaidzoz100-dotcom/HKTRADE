@@ -40,8 +40,9 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center text-center px-4 pt-28 pb-16 md:pt-40 gap-8">
         <div className="space-y-4 max-w-2xl">
           <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
-            Live gold, silver and forex — with{' '}
-            <span className="text-gold-gradient">alarms</span> that{' '}
+            Live gold, silver and forex
+            <br />
+            with <span className="text-gold-gradient">alarms</span> that{' '}
             <span className="text-gold-gradient">won't let you miss it</span>
           </h2>
           <p
@@ -62,7 +63,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setLocation('/sign-in')}
-            className="font-mono uppercase tracking-wide border border-border px-6 py-3 rounded-sm hover:bg-card"
+            className="font-mono uppercase tracking-wide text-white px-6 py-3 rounded-sm bg-[#1E2330] hover:bg-[#2A3040] transition-colors"
           >
             Sign in
           </button>

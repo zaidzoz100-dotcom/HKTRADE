@@ -50,40 +50,53 @@ function UpgradeBubble({
 }
 
 /**
- * Compact trial-status readout shown under the Settings/Log Out controls in
- * the header, replacing the old full-width banner. Also owns the pricing
- * dialog + floating upgrade bubble, mirroring the previous TrialBanner.
+ * Owns the trial/premium state + pricing dialog, and renders:
+ *  - a compact trial-status line (small bold text + animated hourglass),
+ *    meant to be placed inline in normal page flow (NOT inside the header,
+ *    since the header's `backdrop-blur` creates a new containing block for
+ *    `position: fixed` descendants, which previously pinned the "Upgrade"
+ *    FAB to the header's corner instead of the viewport's).
+ *  - the floating circular "Upgrade" FAB, rendered at the document root
+ *    level so its `fixed` positioning is relative to the viewport.
+ * Returns null entirely once the user is premium (no trial UI at all).
  */
-function TrialStatus() {
+function useTrialGate() {
   const [pricingOpen, setPricingOpen] = useState(false);
   const { data: account } = useGetAccount({
     query: { queryKey: getGetAccountQueryKey() },
   });
 
-  if (!account || account.isPremium) return null;
-
-  if (account.daysRemaining > 0) {
-    return (
-      <>
-        <PricingDialog open={pricingOpen} onOpenChange={setPricingOpen} />
-        <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-primary">
-          <Hourglass className="h-3 w-3 animate-hourglass" />
-          FREE TRIAL — {account.daysRemaining} day{account.daysRemaining === 1 ? "" : "s"} left
-        </div>
-        <UpgradeBubble urgent={false} onClick={() => setPricingOpen(true)} />
-      </>
-    );
+  if (!account || account.isPremium) {
+    return { showTrialUi: false, pricingOpen, setPricingOpen, account: undefined, urgent: false };
   }
 
-  return (
-    <>
-      <PricingDialog open={pricingOpen} onOpenChange={setPricingOpen} />
-      <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-red-400">
-        <Hourglass className="h-3 w-3 animate-hourglass" />
-        TRIAL ENDED — ALERTS LOCKED
+  return {
+    showTrialUi: true,
+    pricingOpen,
+    setPricingOpen,
+    account,
+    urgent: account.daysRemaining <= 0,
+  };
+}
+
+function TrialLine({
+  account,
+}: {
+  account: { daysRemaining: number };
+}) {
+  if (account.daysRemaining > 0) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-primary">
+        <Hourglass className="h-3.5 w-3.5 animate-hourglass" />
+        FREE TRIAL — {account.daysRemaining} day{account.daysRemaining === 1 ? "" : "s"} left
       </div>
-      <UpgradeBubble urgent={true} onClick={() => setPricingOpen(true)} />
-    </>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-red-400">
+      <Hourglass className="h-3.5 w-3.5 animate-hourglass" />
+      TRIAL ENDED — ALERTS LOCKED
+    </div>
   );
 }
 
@@ -92,6 +105,7 @@ export default function TrackerDashboard() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [presetAsset, setPresetAsset] = useState<string | undefined>(undefined);
+  const trial = useTrialGate();
   const { data: prices } = useGetPrices({
     query: {
       queryKey: getGetPricesQueryKey(),
@@ -103,9 +117,12 @@ export default function TrackerDashboard() {
   return (
     <div className="min-h-[100dvh] text-foreground pb-20">
       <AlarmOverlay />
-      
+
+      {/* Header stays clean: brand + settings/log out only. Trial status and
+          the Upgrade FAB live outside this element (see below) so the
+          header's backdrop-blur can't clip/contain the fixed-position FAB. */}
       <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-2.5 flex items-center justify-between">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <BrandLogo size={30} />
             <div className="flex flex-col justify-center">
@@ -116,34 +133,32 @@ export default function TrackerDashboard() {
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-4">
-              {user?.primaryEmailAddress && (
-                <span className="hidden sm:inline text-xs font-mono text-muted-foreground">
-                  {user.primaryEmailAddress.emailAddress}
-                </span>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setSettingsOpen(true)}
-                className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                aria-label="Alert settings"
-              >
-                <Settings2 className="h-4.5 w-4.5" />
-              </Button>
-              <LogoutButton className="text-xs font-mono uppercase tracking-wide text-muted-foreground hover:text-foreground" />
-            </div>
-            <TrialStatus />
+          <div className="flex items-center gap-4">
+            {user?.primaryEmailAddress && (
+              <span className="hidden sm:inline text-xs font-mono text-muted-foreground">
+                {user.primaryEmailAddress.emailAddress}
+              </span>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setSettingsOpen(true)}
+              className="h-9 w-9 text-muted-foreground hover:text-foreground"
+              aria-label="Alert settings"
+            >
+              <Settings2 className="h-4.5 w-4.5" />
+            </Button>
+            <LogoutButton className="text-xs font-mono uppercase tracking-wide text-muted-foreground hover:text-foreground" />
           </div>
           <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        <div className="sm:w-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <CreateAlertDialog />
+          {trial.showTrialUi && trial.account && <TrialLine account={trial.account} />}
         </div>
         <LivePrices
           prices={prices}
@@ -160,6 +175,13 @@ export default function TrackerDashboard() {
         />
         <AlertsList />
       </main>
+
+      {trial.showTrialUi && (
+        <>
+          <PricingDialog open={trial.pricingOpen} onOpenChange={trial.setPricingOpen} />
+          <UpgradeBubble urgent={trial.urgent} onClick={() => trial.setPricingOpen(true)} />
+        </>
+      )}
     </div>
   );
 }

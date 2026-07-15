@@ -1,6 +1,13 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, Check } from "lucide-react";
 
 const CONTACT_ADMIN_URL = "https://t.me/hackedtrad";
+
+const PREMIUM_FEATURES = [
+  "Unlimited price alerts, any asset",
+  "Real-time push notifications & custom ringtones",
+  "Priority admin support on Telegram",
+  "Lifetime access — pay once per plan, no recurring surprises",
+];
 
 /**
  * Shared pricing content shown before sending a user to Telegram to pay —
@@ -16,6 +23,15 @@ export function PricingPlans() {
           Choose Your Premium Plan
         </h3>
       </div>
+
+      <ul className="space-y-1.5">
+        {PREMIUM_FEATURES.map((feature) => (
+          <li key={feature} className="flex items-start gap-2 text-sm text-muted-foreground">
+            <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+            {feature}
+          </li>
+        ))}
+      </ul>
 
       <div className="space-y-2.5">
         <div className="flex items-center justify-between rounded-lg border border-border bg-card/60 px-4 py-3">
@@ -54,6 +70,9 @@ export function PricingPlans() {
       >
         Contact Admin to Upgrade
       </a>
+      <p className="text-center text-xs text-muted-foreground font-mono">
+        Telegram: @hackedtrad
+      </p>
     </div>
   );
 }

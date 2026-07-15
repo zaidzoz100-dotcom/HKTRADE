@@ -10,14 +10,15 @@ import { BrandLogo } from "@/components/brand-logo";
 import { PricingDialog } from "@/components/pricing-dialog";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { Button } from "@/components/ui/button";
-import { Settings2, MessageCircle } from "lucide-react";
+import { Settings2, MessageCircle, Hourglass } from "lucide-react";
 
 /**
  * Floating, circular "Contact Admin to Upgrade" chat-bubble button, fixed to
  * the bottom-right corner of the viewport. Shared by both trial states below
  * (active vs expired) so there is exactly one upgrade entry point on screen,
  * independent of scroll position. `env(safe-area-inset-bottom/right)` keeps
- * it clear of home-indicator/notch areas on mobile.
+ * it clear of home-indicator/notch areas on mobile. Sized and glowing
+ * prominently since this is the app's main upgrade path.
  */
 function UpgradeBubble({
   urgent,
@@ -33,21 +34,27 @@ function UpgradeBubble({
       aria-label="Contact admin to upgrade"
       title="Contact Admin to Upgrade"
       style={{
-        bottom: "calc(1.25rem + env(safe-area-inset-bottom))",
-        right: "calc(1.25rem + env(safe-area-inset-right))",
+        bottom: "calc(1.5rem + env(safe-area-inset-bottom))",
+        right: "calc(1.5rem + env(safe-area-inset-right))",
       }}
-      className={`fixed z-40 h-14 w-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 ${
+      className={`fixed z-40 h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-full flex flex-col items-center justify-center gap-0.5 shadow-2xl ring-4 transition-transform hover:scale-105 active:scale-95 ${
         urgent
-          ? "bg-primary text-black shadow-primary/50 animate-siren"
-          : "bg-card border border-primary/40 text-primary shadow-black/40 hover:bg-primary/10"
+          ? "bg-primary text-black shadow-primary/60 ring-primary/30 animate-siren"
+          : "bg-primary text-black shadow-primary/50 ring-primary/20"
       }`}
     >
-      <MessageCircle className="h-6 w-6" />
+      <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
+      <span className="text-[9px] font-mono font-extrabold uppercase tracking-wide leading-none">Upgrade</span>
     </button>
   );
 }
 
-function TrialBanner() {
+/**
+ * Compact trial-status readout shown under the Settings/Log Out controls in
+ * the header, replacing the old full-width banner. Also owns the pricing
+ * dialog + floating upgrade bubble, mirroring the previous TrialBanner.
+ */
+function TrialStatus() {
   const [pricingOpen, setPricingOpen] = useState(false);
   const { data: account } = useGetAccount({
     query: { queryKey: getGetAccountQueryKey() },
@@ -59,10 +66,9 @@ function TrialBanner() {
     return (
       <>
         <PricingDialog open={pricingOpen} onOpenChange={setPricingOpen} />
-        <div className="bg-primary/10 border border-primary/30 rounded-sm px-4 py-3 text-sm font-mono">
-          <span className="text-primary">
-            FREE TRIAL — {account.daysRemaining} day{account.daysRemaining === 1 ? "" : "s"} remaining
-          </span>
+        <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-primary">
+          <Hourglass className="h-3 w-3 animate-hourglass" />
+          FREE TRIAL — {account.daysRemaining} day{account.daysRemaining === 1 ? "" : "s"} left
         </div>
         <UpgradeBubble urgent={false} onClick={() => setPricingOpen(true)} />
       </>
@@ -72,10 +78,9 @@ function TrialBanner() {
   return (
     <>
       <PricingDialog open={pricingOpen} onOpenChange={setPricingOpen} />
-      <div className="bg-red-950/60 border border-red-800 rounded-sm px-4 py-3 text-sm font-mono">
-        <span className="text-red-200">
-          Your free trial has ended — new alerts are locked
-        </span>
+      <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-red-400">
+        <Hourglass className="h-3 w-3 animate-hourglass" />
+        TRIAL ENDED — ALERTS LOCKED
       </div>
       <UpgradeBubble urgent={true} onClick={() => setPricingOpen(true)} />
     </>
@@ -100,7 +105,7 @@ export default function TrackerDashboard() {
       <AlarmOverlay />
       
       <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <BrandLogo size={30} />
             <div className="flex flex-col justify-center">
@@ -111,34 +116,34 @@ export default function TrackerDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {user?.primaryEmailAddress && (
-              <span className="hidden sm:inline text-xs font-mono text-muted-foreground">
-                {user.primaryEmailAddress.emailAddress}
-              </span>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setSettingsOpen(true)}
-              className="h-9 w-9 text-muted-foreground hover:text-foreground"
-              aria-label="Alert settings"
-            >
-              <Settings2 className="h-4.5 w-4.5" />
-            </Button>
-            <LogoutButton className="text-xs font-mono uppercase tracking-wide text-muted-foreground hover:text-foreground" />
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-4">
+              {user?.primaryEmailAddress && (
+                <span className="hidden sm:inline text-xs font-mono text-muted-foreground">
+                  {user.primaryEmailAddress.emailAddress}
+                </span>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSettingsOpen(true)}
+                className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                aria-label="Alert settings"
+              >
+                <Settings2 className="h-4.5 w-4.5" />
+              </Button>
+              <LogoutButton className="text-xs font-mono uppercase tracking-wide text-muted-foreground hover:text-foreground" />
+            </div>
+            <TrialStatus />
           </div>
           <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        <div className="space-y-4">
-          <TrialBanner />
-          <div className="sm:w-auto">
-            <CreateAlertDialog />
-          </div>
+        <div className="sm:w-auto">
+          <CreateAlertDialog />
         </div>
         <LivePrices
           prices={prices}

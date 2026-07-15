@@ -34,9 +34,9 @@ export function LivePrices({
 
   if (!prices) {
     return (
-      <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="card-cloud animate-pulse w-32 h-32 sm:w-36 sm:h-36 bg-card border border-border" />
+          <div key={i} className="card-cloud animate-pulse w-full aspect-square max-w-[9.5rem] mx-auto bg-card border border-border" />
         ))}
       </div>
     );
@@ -51,7 +51,7 @@ export function LivePrices({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
+          <Activity className="h-5 w-5 text-primary animate-heartbeat" />
           Live Markets
         </h2>
         <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
@@ -61,7 +61,7 @@ export function LivePrices({
         </div>
       </div>
       
-      <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {allAssets.map((asset, i) => {
           const prevPrice = prevPrices[asset.symbol];
           const hasChanged = prevPrice !== undefined && prevPrice !== asset.price;
@@ -75,7 +75,7 @@ export function LivePrices({
               onClick={() => onSelectAsset?.(asset.symbol)}
               title={`Set a price target for ${asset.name}`}
               style={{ animationDelay: `${i * 0.4}s` }}
-              className="card-cloud animate-float group relative w-32 h-32 sm:w-36 sm:h-36 shrink-0 bg-card border border-border p-4 flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer transition-[border-radius,transform,border-color] duration-300 hover:scale-105 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="card-cloud animate-float group relative w-full aspect-square max-w-[9.5rem] mx-auto bg-card border border-border p-2 sm:p-4 flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer transition-[border-radius,transform,border-color] duration-300 hover:scale-105 hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="font-mono font-bold text-xs text-muted-foreground">{asset.symbol}</span>
 

@@ -14,6 +14,8 @@ a trial-length extension rather than a schedule change to `premiumExpiresAt`. Th
 referrer who is already on a paid plan sees no immediate visible effect — accepted tradeoff, not
 a bug, unless a future request asks to extend paid-plan reward too.
 
+**Registration hardening (2026-07-15):** referral rewards are gated on **both** Clerk email verification (`users.isEmailVerified`, synced from `clerkClient.users.getUser()` since Clerk doesn't push verification via a column automatically) AND a mandatory post-signup "complete your profile" step (`country`+`phoneNumber`, `users.profileCompletedAt`) enforced client-side before the dashboard renders (`AuthenticatedTracker` in `App.tsx`). `applyReferral` only *records* `referredByCode` now — the actual reward payout is deferred to `maybeGrantReferralReward`, called from both `completeProfile` and `applyReferral`/verification-resync, idempotent via `users.referralRewardGranted`, since either condition can be the last one satisfied.
+
 **How to apply:** Redemption is enforced server-side (`applyReferral` in
 `artifacts/api-server/src/lib/account.ts`, exposed at `POST /account/referral`) inside a DB
 transaction: a user can redeem at most once (`referredByCode` starts null, set once), can't redeem

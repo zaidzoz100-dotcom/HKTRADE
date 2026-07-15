@@ -84,6 +84,33 @@ paths:
           description: Invalid code, self-referral, or already redeemed
         "401":
           description: Not authenticated
+  /account/profile:
+    post:
+      operationId: completeProfile
+      tags: [account]
+      summary: Submit the mandatory registration profile (country + phone number)
+      description: >
+        Required once per account before full dashboard access is granted.
+        Also the point at which a pending referral reward is paid out to the
+        referrer, once this user's email is verified and their profile is
+        complete.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteProfileInput"
+      responses:
+        "200":
+          description: Updated account status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountStatus"
+        "400":
+          description: Invalid country or phone number
+        "401":
+          description: Not authenticated
   /account/favorites:
     patch:
       operationId: updateFavoriteAssets
@@ -557,6 +584,18 @@ components:
         referralBonusDays:
           type: integer
           description: "Extra trial days earned by referring other users (4 per successful referral)"
+        isEmailVerified:
+          type: boolean
+          description: "Whether Clerk has verified this account's email address"
+        profileComplete:
+          type: boolean
+          description: "Whether the mandatory country/phone registration step has been completed"
+        country:
+          type: ["string", "null"]
+          description: "ISO 3166-1 alpha-2 country code chosen during profile completion"
+        phoneNumber:
+          type: ["string", "null"]
+          description: "E.164 phone number (with country dial code) submitted during profile completion"
       required:
         - isPremium
         - plan
@@ -570,12 +609,26 @@ components:
         - referralCode
         - referredByCode
         - referralBonusDays
+        - isEmailVerified
+        - profileComplete
+        - country
+        - phoneNumber
     ApplyReferralInput:
       type: object
       properties:
         code:
           type: string
       required: [code]
+    CompleteProfileInput:
+      type: object
+      properties:
+        country:
+          type: string
+          description: "ISO 3166-1 alpha-2 country code"
+        phoneNumber:
+          type: string
+          description: "Full E.164 phone number, including the country's dial code"
+      required: [country, phoneNumber]
     SubscriptionRequiredError:
       type: object
       properties:

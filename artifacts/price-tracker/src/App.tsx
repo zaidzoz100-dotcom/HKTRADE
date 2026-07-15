@@ -6,12 +6,16 @@ import NotFound from '@/pages/not-found';
 import Dashboard from '@/pages/dashboard';
 import Home from '@/pages/home';
 import AdminPage from '@/pages/admin';
+import CompleteProfile from '@/pages/complete-profile';
 import { AnimatedBackground } from '@/components/animated-background';
 import { Route, Switch, useLocation, Router as WouterRouter, Redirect } from 'wouter';
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { dark } from '@clerk/themes';
 import { capturePendingReferralCode } from '@/lib/referral';
+import { useGetAccount, getGetAccountQueryKey } from '@workspace/api-client-react';
+import { ReferralRedeemer } from '@/components/referral-redeemer';
+import { Spinner } from '@/components/ui/spinner';
 
 const queryClient = new QueryClient();
 
@@ -156,11 +160,38 @@ function HomeRedirect() {
   );
 }
 
+/**
+ * Gates dashboard access behind the mandatory profile-completion step.
+ * Mounts `ReferralRedeemer` here (rather than inside `Dashboard`) so a
+ * pending referral code is recorded as soon as the account loads, even
+ * while the user is still on the "complete your profile" screen.
+ */
+function AuthenticatedTracker() {
+  const { data: account, isLoading } = useGetAccount({
+    query: { queryKey: getGetAccountQueryKey() },
+  });
+
+  if (isLoading || !account) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center">
+        <Spinner className="size-6 text-white/60" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <ReferralRedeemer referredByCode={account.referredByCode} />
+      {account.profileComplete ? <Dashboard /> : <CompleteProfile />}
+    </>
+  );
+}
+
 function TrackerPage() {
   return (
     <>
       <Show when="signed-in">
-        <Dashboard />
+        <AuthenticatedTracker />
       </Show>
       <Show when="signed-out">
         <Redirect to="/" />

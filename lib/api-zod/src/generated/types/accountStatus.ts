@@ -30,4 +30,18 @@ export interface AccountStatus {
   referredByCode: string | null;
   /** Extra trial days earned by referring other users (4 per successful referral) */
   referralBonusDays: number;
+  /** Whether Clerk has verified this account's email address */
+  isEmailVerified: boolean;
+  /** Whether the mandatory country/phone registration step has been completed */
+  profileComplete: boolean;
+  /**
+     * ISO 3166-1 alpha-2 country code chosen during profile completion
+     * @nullable
+     */
+  country: string | null;
+  /**
+     * E.164 phone number (with country dial code) submitted during profile completion
+     * @nullable
+     */
+  phoneNumber: string | null;
 }

@@ -5,9 +5,17 @@ import {
   UpdateFavoriteAssetsResponse,
   ApplyReferralBody,
   ApplyReferralResponse,
+  CompleteProfileBody,
+  CompleteProfileResponse,
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth";
-import { ensureUser, computeAccountStatus, updateFavoriteAssets, applyReferral } from "../lib/account";
+import {
+  ensureUser,
+  computeAccountStatus,
+  updateFavoriteAssets,
+  applyReferral,
+  completeProfile,
+} from "../lib/account";
 
 const router: IRouter = Router();
 
@@ -31,6 +39,23 @@ router.post("/account/referral", requireAuth, async (req, res): Promise<void> =>
   }
 
   res.json(ApplyReferralResponse.parse(computeAccountStatus(result.user)));
+});
+
+router.post("/account/profile", requireAuth, async (req, res): Promise<void> => {
+  const body = CompleteProfileBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  await ensureUser(req.userId!);
+  const result = await completeProfile(req.userId!, body.data.country, body.data.phoneNumber);
+  if (!result.ok) {
+    res.status(400).json({ error: result.error });
+    return;
+  }
+
+  res.json(CompleteProfileResponse.parse(computeAccountStatus(result.user)));
 });
 
 router.patch("/account/favorites", requireAuth, async (req, res): Promise<void> => {

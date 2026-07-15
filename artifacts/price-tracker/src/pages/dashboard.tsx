@@ -7,7 +7,6 @@ import { AlertsList } from "@/components/alerts-list";
 import { CreateAlertDialog } from "@/components/create-alert-dialog";
 import { CustomizeAssetsDialog } from "@/components/customize-assets-dialog";
 import { AlarmOverlay } from "@/components/alarm-overlay";
-import { ReferralRedeemer } from "@/components/referral-redeemer";
 import { LogoutButton } from "@/App";
 import { BrandLogo } from "@/components/brand-logo";
 import { PricingDialog } from "@/components/pricing-dialog";
@@ -121,7 +120,6 @@ export default function TrackerDashboard() {
   return (
     <div className="min-h-[100dvh] text-foreground pb-20">
       <AlarmOverlay />
-      <ReferralRedeemer referredByCode={account?.referredByCode} />
 
       {/* Header stays clean: brand + settings/log out only. Trial status and
           the Upgrade FAB live outside this element (see below) so the

@@ -25,6 +25,7 @@ export * from './alertUpdateStatus';
 export * from './applyReferralInput';
 export * from './assetInfo';
 export * from './assetInfoCategory';
+export * from './completeProfileInput';
 export * from './cryptoPrice';
 export * from './forexRate';
 export * from './healthStatus';

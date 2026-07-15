@@ -1,6 +1,9 @@
 import { eq, and, isNull, ne } from "drizzle-orm";
+import { clerkClient } from "@clerk/express";
 import { db, usersTable, type User, type PremiumPlan } from "@workspace/db";
 import { DEFAULT_FAVORITE_ASSETS, isValidAssetSymbol } from "./assets";
+import { isValidPhoneForCountry } from "@workspace/api-zod";
+import { logger } from "./logger";
 
 export type AdminPlanAction =
   | "trial_active"
@@ -27,6 +30,10 @@ export interface AccountStatus {
   referralCode: string;
   referredByCode: string | null;
   referralBonusDays: number;
+  isEmailVerified: boolean;
+  profileComplete: boolean;
+  country: string | null;
+  phoneNumber: string | null;
 }
 
 const REFERRAL_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I — avoids ambiguous codes
@@ -39,19 +46,51 @@ function generateReferralCode(length = 8): string {
   return code;
 }
 
+/**
+ * Looks up whether Clerk considers this user's primary email address
+ * verified. Email/password sign-ups already require verification before
+ * Clerk grants a session, and OAuth providers (Google/GitHub/etc.)
+ * pre-verify the email themselves — so this is normally `true` by the time
+ * we ever see a request for this user. It's still checked explicitly
+ * (rather than assumed) so referral-reward gating is based on Clerk's real
+ * state, not on an assumption about the sign-up flow.
+ */
+async function isClerkEmailVerified(clerkUserId: string): Promise<boolean> {
+  try {
+    const clerkUser = await clerkClient.users.getUser(clerkUserId);
+    const primaryEmail = clerkUser.emailAddresses.find(
+      (e) => e.id === clerkUser.primaryEmailAddressId,
+    );
+    return primaryEmail?.verification?.status === "verified";
+  } catch (err) {
+    logger.error({ err, clerkUserId }, "Failed to check Clerk email verification status");
+    return false;
+  }
+}
+
 /** JIT-provision a local user record for a Clerk-authenticated request. */
 export async function ensureUser(clerkUserId: string): Promise<User> {
   const [existing] = await db
     .select()
     .from(usersTable)
     .where(eq(usersTable.clerkUserId, clerkUserId));
-  if (existing) return existing;
+  if (existing) {
+    // Best-effort resync: if we haven't yet recorded this account as
+    // verified, re-check Clerk. Cheap because it only fires for the
+    // (normally brief) window before verification is confirmed.
+    if (!existing.isEmailVerified) {
+      return await refreshEmailVerification(existing);
+    }
+    return existing;
+  }
+
+  const isEmailVerified = await isClerkEmailVerified(clerkUserId);
 
   // Retry on the rare chance of a referral-code collision (unique constraint).
   for (let attempt = 0; attempt < 5; attempt++) {
     const [created] = await db
       .insert(usersTable)
-      .values({ clerkUserId, referralCode: generateReferralCode() })
+      .values({ clerkUserId, referralCode: generateReferralCode(), isEmailVerified })
       .onConflictDoNothing()
       .returning();
     if (created) return created;
@@ -66,6 +105,21 @@ export async function ensureUser(clerkUserId: string): Promise<User> {
   }
 
   throw new Error(`Failed to provision user ${clerkUserId}`);
+}
+
+/** Re-checks Clerk and persists `isEmailVerified` if it has flipped to true. */
+async function refreshEmailVerification(user: User): Promise<User> {
+  const verifiedNow = await isClerkEmailVerified(user.clerkUserId);
+  if (!verifiedNow) return user;
+
+  const [updated] = await db
+    .update(usersTable)
+    .set({ isEmailVerified: true })
+    .where(eq(usersTable.id, user.id))
+    .returning();
+  const result = updated ?? user;
+  await maybeGrantReferralReward(result);
+  return result;
 }
 
 /**
@@ -87,6 +141,10 @@ export function computeAccountStatus(user: User): AccountStatus {
   const referralCode = user.referralCode;
   const referredByCode = user.referredByCode ?? null;
   const referralBonusDays = user.referralBonusDays ?? 0;
+  const isEmailVerified = user.isEmailVerified;
+  const profileComplete = !!user.profileCompletedAt;
+  const country = user.country ?? null;
+  const phoneNumber = user.phoneNumber ?? null;
 
   if (plan === "monthly" || plan === "yearly") {
     const active =
@@ -109,6 +167,10 @@ export function computeAccountStatus(user: User): AccountStatus {
       referralCode,
       referredByCode,
       referralBonusDays,
+      isEmailVerified,
+      profileComplete,
+      country,
+      phoneNumber,
     };
   }
 
@@ -133,7 +195,50 @@ export function computeAccountStatus(user: User): AccountStatus {
     referralCode,
     referredByCode,
     referralBonusDays,
+    isEmailVerified,
+    profileComplete,
+    country,
+    phoneNumber,
   };
+}
+
+/**
+ * Pays out the deferred referral reward — extra trial days for the
+ * *referrer* — the moment this user satisfies both required conditions:
+ * verified email and a completed registration profile. Idempotent via
+ * `referralRewardGranted`, since either `applyReferral` (redeeming a code)
+ * or `completeProfile`/verification-resync can be the one to complete the
+ * last missing condition, in either order.
+ */
+async function maybeGrantReferralReward(user: User): Promise<void> {
+  if (!user.referredByCode) return;
+  if (user.referralRewardGranted) return;
+  if (!user.isEmailVerified) return;
+  if (!user.profileCompletedAt) return;
+
+  await db.transaction(async (tx) => {
+    const [current] = await tx
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, user.id));
+    if (!current || current.referralRewardGranted || !current.referredByCode) return;
+
+    const [referrer] = await tx
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.referralCode, current.referredByCode));
+    if (!referrer) return;
+
+    await tx
+      .update(usersTable)
+      .set({ referralRewardGranted: true })
+      .where(and(eq(usersTable.id, current.id), eq(usersTable.referralRewardGranted, false)));
+
+    await tx
+      .update(usersTable)
+      .set({ referralBonusDays: referrer.referralBonusDays + REFERRAL_REWARD_DAYS })
+      .where(and(eq(usersTable.id, referrer.id), ne(usersTable.id, current.id)));
+  });
 }
 
 export type ReferralApplyResult =
@@ -142,11 +247,14 @@ export type ReferralApplyResult =
 
 /**
  * Redeems a referral code for a user who hasn't already redeemed one.
- * Rewards the *referrer* (the code's owner) with `REFERRAL_REWARD_DAYS` extra
- * trial days; the referred user themselves gets no separate bonus — the
- * spec only rewards the inviter. Wrapped in a transaction so the "already
- * redeemed" check and both writes (referred user + referrer) are atomic
- * against concurrent redemption attempts.
+ * This only *records* the redemption (`referredByCode`) — the referrer's
+ * `REFERRAL_REWARD_DAYS` bonus is paid out separately by
+ * `maybeGrantReferralReward`, once this user's email is verified AND their
+ * registration profile (country/phone) is complete. That way a fake or
+ * throwaway signup can capture a code but never actually pays out until the
+ * account clears both anti-fraud gates. Wrapped in a transaction so the
+ * "already redeemed" check and the write are atomic against concurrent
+ * redemption attempts.
  */
 export async function applyReferral(
   clerkUserId: string,
@@ -157,19 +265,19 @@ export async function applyReferral(
     return { ok: false, error: "Referral code is required" };
   }
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [referred] = await tx
       .select()
       .from(usersTable)
       .where(eq(usersTable.clerkUserId, clerkUserId));
     if (!referred) {
-      return { ok: false, error: "Account not found" };
+      return { ok: false, error: "Account not found" } as ReferralApplyResult;
     }
     if (referred.referredByCode) {
-      return { ok: false, error: "Referral already applied to this account" };
+      return { ok: false, error: "Referral already applied to this account" } as ReferralApplyResult;
     }
     if (referred.referralCode === normalizedCode) {
-      return { ok: false, error: "You can't refer yourself" };
+      return { ok: false, error: "You can't refer yourself" } as ReferralApplyResult;
     }
 
     const [referrer] = await tx
@@ -177,7 +285,7 @@ export async function applyReferral(
       .from(usersTable)
       .where(eq(usersTable.referralCode, normalizedCode));
     if (!referrer) {
-      return { ok: false, error: "Invalid referral code" };
+      return { ok: false, error: "Invalid referral code" } as ReferralApplyResult;
     }
 
     const [updatedReferred] = await tx
@@ -189,20 +297,21 @@ export async function applyReferral(
       .returning();
     if (!updatedReferred) {
       // Lost a race with a concurrent redemption on the same account.
-      return { ok: false, error: "Referral already applied to this account" };
+      return { ok: false, error: "Referral already applied to this account" } as ReferralApplyResult;
     }
 
-    await tx
-      .update(usersTable)
-      .set({
-        referralBonusDays: referrer.referralBonusDays + REFERRAL_REWARD_DAYS,
-      })
-      .where(
-        and(eq(usersTable.id, referrer.id), ne(usersTable.id, referred.id)),
-      );
-
-    return { ok: true, user: updatedReferred };
+    return { ok: true, user: updatedReferred } as ReferralApplyResult;
   });
+
+  // Outside the transaction: in the (unusual) case a user completes their
+  // profile and verifies email *before* redeeming a code, pay out
+  // immediately instead of waiting for a completeProfile call that already
+  // happened.
+  if (result.ok) {
+    await maybeGrantReferralReward(result.user);
+  }
+
+  return result;
 }
 
 /**
@@ -233,6 +342,43 @@ export async function updateFavoriteAssets(
     throw new Error(`User ${clerkUserId} not found`);
   }
   return updated;
+}
+
+export type CompleteProfileResult =
+  | { ok: true; user: User }
+  | { ok: false; error: string };
+
+/**
+ * Records the mandatory registration profile (country + phone number).
+ * Validates the phone number actually matches the selected country's dial
+ * code so this can't be trivially satisfied with junk data. Once saved,
+ * checks whether a pending referral reward can now be paid out.
+ */
+export async function completeProfile(
+  clerkUserId: string,
+  country: string,
+  phoneNumber: string,
+): Promise<CompleteProfileResult> {
+  if (!isValidPhoneForCountry(country, phoneNumber)) {
+    return {
+      ok: false,
+      error: "Phone number doesn't match the selected country's dial code",
+    };
+  }
+
+  const [updated] = await db
+    .update(usersTable)
+    .set({ country, phoneNumber, profileCompletedAt: new Date() })
+    .where(eq(usersTable.clerkUserId, clerkUserId))
+    .returning();
+
+  if (!updated) {
+    return { ok: false, error: "Account not found" };
+  }
+
+  await maybeGrantReferralReward(updated);
+
+  return { ok: true, user: updated };
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;

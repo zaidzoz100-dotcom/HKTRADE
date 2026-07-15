@@ -57,7 +57,11 @@ export const GetAccountResponse = zod.object({
   "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards'),
   "referralCode": zod.string().describe('This user\'s own shareable referral code'),
   "referredByCode": zod.string().nullable().describe('The referral code this user redeemed, if any'),
-  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)')
+  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)'),
+  "isEmailVerified": zod.boolean().describe('Whether Clerk has verified this account\'s email address'),
+  "profileComplete": zod.boolean().describe('Whether the mandatory country\/phone registration step has been completed'),
+  "country": zod.string().nullable().describe('ISO 3166-1 alpha-2 country code chosen during profile completion'),
+  "phoneNumber": zod.string().nullable().describe('E.164 phone number (with country dial code) submitted during profile completion')
 })
 
 
@@ -81,7 +85,40 @@ export const ApplyReferralResponse = zod.object({
   "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards'),
   "referralCode": zod.string().describe('This user\'s own shareable referral code'),
   "referredByCode": zod.string().nullable().describe('The referral code this user redeemed, if any'),
-  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)')
+  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)'),
+  "isEmailVerified": zod.boolean().describe('Whether Clerk has verified this account\'s email address'),
+  "profileComplete": zod.boolean().describe('Whether the mandatory country\/phone registration step has been completed'),
+  "country": zod.string().nullable().describe('ISO 3166-1 alpha-2 country code chosen during profile completion'),
+  "phoneNumber": zod.string().nullable().describe('E.164 phone number (with country dial code) submitted during profile completion')
+})
+
+
+/**
+ * Required once per account before full dashboard access is granted. Also the point at which a pending referral reward is paid out to the referrer, once this user's email is verified and their profile is complete.
+ * @summary Submit the mandatory registration profile (country + phone number)
+ */
+export const CompleteProfileBody = zod.object({
+  "country": zod.string().describe('ISO 3166-1 alpha-2 country code'),
+  "phoneNumber": zod.string().describe('Full E.164 phone number, including the country\'s dial code')
+})
+
+export const CompleteProfileResponse = zod.object({
+  "isPremium": zod.boolean(),
+  "plan": zod.enum(['trial', 'monthly', 'yearly']),
+  "planStatus": zod.enum(['active', 'expired']),
+  "trialStartedAt": zod.coerce.date(),
+  "trialEndsAt": zod.coerce.date(),
+  "premiumExpiresAt": zod.coerce.date().nullable(),
+  "daysRemaining": zod.number().describe('Days left in the free trial, 0 if expired or premium'),
+  "canCreateAlerts": zod.boolean(),
+  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards'),
+  "referralCode": zod.string().describe('This user\'s own shareable referral code'),
+  "referredByCode": zod.string().nullable().describe('The referral code this user redeemed, if any'),
+  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)'),
+  "isEmailVerified": zod.boolean().describe('Whether Clerk has verified this account\'s email address'),
+  "profileComplete": zod.boolean().describe('Whether the mandatory country\/phone registration step has been completed'),
+  "country": zod.string().nullable().describe('ISO 3166-1 alpha-2 country code chosen during profile completion'),
+  "phoneNumber": zod.string().nullable().describe('E.164 phone number (with country dial code) submitted during profile completion')
 })
 
 
@@ -104,7 +141,11 @@ export const UpdateFavoriteAssetsResponse = zod.object({
   "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards'),
   "referralCode": zod.string().describe('This user\'s own shareable referral code'),
   "referredByCode": zod.string().nullable().describe('The referral code this user redeemed, if any'),
-  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)')
+  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)'),
+  "isEmailVerified": zod.boolean().describe('Whether Clerk has verified this account\'s email address'),
+  "profileComplete": zod.boolean().describe('Whether the mandatory country\/phone registration step has been completed'),
+  "country": zod.string().nullable().describe('ISO 3166-1 alpha-2 country code chosen during profile completion'),
+  "phoneNumber": zod.string().nullable().describe('E.164 phone number (with country dial code) submitted during profile completion')
 })
 
 

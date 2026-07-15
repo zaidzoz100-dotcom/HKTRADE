@@ -37,6 +37,16 @@ export const usersTable = pgTable("users", {
   referredByCode: text("referred_by_code"),
   /** Extra trial days earned by successfully referring other users (4 per referral); added on top of TRIAL_DAYS when computing this user's trial window. */
   referralBonusDays: integer("referral_bonus_days").notNull().default(0),
+  /** Whether Clerk has verified this account's primary email address. Synced from Clerk; required (along with profile completion) before a pending referral reward is paid out. */
+  isEmailVerified: boolean("is_email_verified").notNull().default(false),
+  /** ISO 3166-1 alpha-2 country code, collected in the mandatory post-signup profile step. Null until that step is completed. */
+  country: text("country"),
+  /** Full E.164 phone number (including country dial code), collected in the mandatory post-signup profile step. Null until that step is completed. */
+  phoneNumber: text("phone_number"),
+  /** Set the moment the mandatory country/phone profile step is completed. Null means the account is still pending onboarding. */
+  profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
+  /** True once the pending referral reward (if any) has been paid out to the referrer. Prevents double-paying when both applyReferral and completeProfile can trigger the grant. */
+  referralRewardGranted: boolean("referral_reward_granted").notNull().default(false),
 });
 
 export type User = typeof usersTable.$inferSelect;

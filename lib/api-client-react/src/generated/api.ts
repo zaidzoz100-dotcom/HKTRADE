@@ -29,6 +29,7 @@ import type {
   AlertUpdate,
   ApplyReferralInput,
   AssetInfo,
+  CompleteProfileInput,
   HealthStatus,
   PriceSnapshot,
   PushSubscribeInput,
@@ -368,6 +369,78 @@ export const useApplyReferral = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getApplyReferralMutationOptions(options));
+    }
+
+export const getCompleteProfileUrl = () => {
+
+
+
+
+  return `/api/account/profile`
+}
+
+/**
+ * Required once per account before full dashboard access is granted. Also the point at which a pending referral reward is paid out to the referrer, once this user's email is verified and their profile is complete.
+ * @summary Submit the mandatory registration profile (country + phone number)
+ */
+export const completeProfile = async (completeProfileInput: CompleteProfileInput, options?: RequestInit): Promise<AccountStatus> => {
+
+  return customFetch<AccountStatus>(getCompleteProfileUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(completeProfileInput)
+  }
+);}
+
+
+
+
+
+export const getCompleteProfileMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeProfile>>, TError,{data: BodyType<CompleteProfileInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeProfile>>, TError,{data: BodyType<CompleteProfileInput>}, TContext> => {
+
+const mutationKey = ['completeProfile'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeProfile>>, {data: BodyType<CompleteProfileInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  completeProfile(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteProfileMutationResult = NonNullable<Awaited<ReturnType<typeof completeProfile>>>
+    export type CompleteProfileMutationBody = BodyType<CompleteProfileInput>
+    export type CompleteProfileMutationError = ErrorType<void>
+
+    /**
+ * @summary Submit the mandatory registration profile (country + phone number)
+ */
+export const useCompleteProfile = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeProfile>>, TError,{data: BodyType<CompleteProfileInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeProfile>>,
+        TError,
+        {data: BodyType<CompleteProfileInput>},
+        TContext
+      > => {
+      return useMutation(getCompleteProfileMutationOptions(options));
     }
 
 export const getUpdateFavoriteAssetsUrl = () => {

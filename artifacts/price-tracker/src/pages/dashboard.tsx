@@ -6,6 +6,7 @@ import { AlertsList } from "@/components/alerts-list";
 import { CreateAlertDialog } from "@/components/create-alert-dialog";
 import { AlarmOverlay } from "@/components/alarm-overlay";
 import { LogoutButton } from "@/App";
+import { BrandLogo } from "@/components/brand-logo";
 
 const CONTACT_ADMIN_URL = "https://t.me/hackedtrad";
 
@@ -68,15 +69,10 @@ export default function TrackerDashboard() {
       <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-primary rounded-sm flex items-center justify-center shadow-[0_0_15px_rgba(252,211,77,0.3)]">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--background))" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 3v18h18" />
-                <path d="m19 9-5 5-4-4-3 3" />
-              </svg>
-            </div>
+            <BrandLogo size={32} />
             <div>
-              <h1 className="font-mono font-bold tracking-widest leading-none text-primary uppercase">Aurum</h1>
-              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em]">Tracker Desk</span>
+              <h1 className="font-mono font-bold tracking-widest leading-none text-primary uppercase">Forex Alarm</h1>
+              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em]">Price Alerts</span>
             </div>
           </div>
 

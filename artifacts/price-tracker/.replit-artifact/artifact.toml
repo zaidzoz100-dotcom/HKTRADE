@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Gold & Forex Price Tracker"
+title = "Forex Alarm"
 version = "1.0.0"
 id = "artifacts/price-tracker"
 router = "path"

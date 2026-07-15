@@ -1,4 +1,4 @@
-# Aurum Watch
+# Forex Alarm
 
 A live gold, silver, and forex price tracker with alarm-clock-style price alerts.
 

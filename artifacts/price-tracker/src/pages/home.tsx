@@ -36,8 +36,10 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col items-center justify-center text-center px-4 gap-8">
         <div className="space-y-4 max-w-2xl">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Live gold, silver &amp; forex — with alarms that won't let you miss it
+          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+            Live gold, silver &amp; forex — with{' '}
+            <span className="text-gold-gradient">alarms</span> that{' '}
+            <span className="text-gold-gradient">won't let you miss it</span>
           </h2>
           <p className="text-muted-foreground text-lg">
             Set a target price. Forex Alarm watches the markets and sounds a real alarm the instant it hits.

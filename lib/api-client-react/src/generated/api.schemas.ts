@@ -23,12 +23,41 @@ export interface ForexRate {
   rate: number;
 }
 
+export interface CryptoPrice {
+  /** Crypto ticker, e.g. BTC, ETH */
+  symbol: string;
+  name: string;
+  /** Price in USD */
+  price: number;
+}
+
 export interface PriceSnapshot {
   updatedAt: string;
   metals: MetalPrice[];
   forex: ForexRate[];
+  crypto: CryptoPrice[];
   /** True if the last upstream price fetch failed and this is a cached snapshot */
   stale: boolean;
+}
+
+export type AssetInfoCategory = typeof AssetInfoCategory[keyof typeof AssetInfoCategory];
+
+
+export const AssetInfoCategory = {
+  metal: 'metal',
+  forex: 'forex',
+  crypto: 'crypto',
+} as const;
+
+export interface AssetInfo {
+  symbol: string;
+  name: string;
+  category: AssetInfoCategory;
+}
+
+export interface UpdateFavoriteAssetsInput {
+  /** Asset symbols to show as market cards; must be non-empty and match known symbols from /assets */
+  favoriteAssets: string[];
 }
 
 export type AlertDirection = typeof AlertDirection[keyof typeof AlertDirection];
@@ -127,6 +156,8 @@ export interface AccountStatus {
   /** Days left in the free trial, 0 if expired or premium */
   daysRemaining: number;
   canCreateAlerts: boolean;
+  /** Asset symbols the user has chosen to show as market cards */
+  favoriteAssets: string[];
 }
 
 export interface SubscriptionRequiredError {

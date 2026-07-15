@@ -19,4 +19,6 @@ export interface AccountStatus {
   /** Days left in the free trial, 0 if expired or premium */
   daysRemaining: number;
   canCreateAlerts: boolean;
+  /** Asset symbols the user has chosen to show as market cards */
+  favoriteAssets: string[];
 }

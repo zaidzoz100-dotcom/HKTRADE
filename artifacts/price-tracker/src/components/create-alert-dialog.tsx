@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useCreateAlert, useGetAccount, getGetAccountQueryKey, getListAlertsQueryKey } from "@workspace/api-client-react";
+import { useCreateAlert, useGetAccount, getGetAccountQueryKey, getListAlertsQueryKey, useGetAssets, getGetAssetsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,8 @@ function SubscriptionRequiredDialog({ open, onOpenChange }: { open: boolean; onO
   );
 }
 
-const ASSETS = [
+// Fallback list, used only until /assets has loaded — keeps the dialog usable instantly on first paint.
+const FALLBACK_ASSETS = [
   { symbol: "XAU", label: "Gold (XAU)" },
   { symbol: "XAG", label: "Silver (XAG)" },
   { symbol: "EUR/USD", label: "EUR/USD" },
@@ -70,6 +71,12 @@ export function CreateAlertDialog({
     query: { queryKey: getGetAccountQueryKey() },
   });
   const canCreateAlerts = account?.canCreateAlerts ?? true;
+  const { data: assetCatalog } = useGetAssets({
+    query: { queryKey: getGetAssetsQueryKey() },
+  });
+  const ASSETS = assetCatalog?.length
+    ? assetCatalog.map((a) => ({ symbol: a.symbol, label: `${a.name} (${a.symbol})` }))
+    : FALLBACK_ASSETS;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

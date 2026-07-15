@@ -27,9 +27,11 @@ import type {
   Alert,
   AlertInput,
   AlertUpdate,
+  AssetInfo,
   HealthStatus,
   PriceSnapshot,
-  SubscriptionRequiredError
+  SubscriptionRequiredError,
+  UpdateFavoriteAssetsInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -280,6 +282,154 @@ export function useGetAccount<TData = Awaited<ReturnType<typeof getAccount>>, TE
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAccountQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateFavoriteAssetsUrl = () => {
+
+
+
+
+  return `/api/account/favorites`
+}
+
+/**
+ * @summary Set the asset symbols shown as market cards on the dashboard
+ */
+export const updateFavoriteAssets = async (updateFavoriteAssetsInput: UpdateFavoriteAssetsInput, options?: RequestInit): Promise<AccountStatus> => {
+
+  return customFetch<AccountStatus>(getUpdateFavoriteAssetsUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateFavoriteAssetsInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateFavoriteAssetsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFavoriteAssets>>, TError,{data: BodyType<UpdateFavoriteAssetsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateFavoriteAssets>>, TError,{data: BodyType<UpdateFavoriteAssetsInput>}, TContext> => {
+
+const mutationKey = ['updateFavoriteAssets'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateFavoriteAssets>>, {data: BodyType<UpdateFavoriteAssetsInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateFavoriteAssets(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateFavoriteAssetsMutationResult = NonNullable<Awaited<ReturnType<typeof updateFavoriteAssets>>>
+    export type UpdateFavoriteAssetsMutationBody = BodyType<UpdateFavoriteAssetsInput>
+    export type UpdateFavoriteAssetsMutationError = ErrorType<void>
+
+    /**
+ * @summary Set the asset symbols shown as market cards on the dashboard
+ */
+export const useUpdateFavoriteAssets = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFavoriteAssets>>, TError,{data: BodyType<UpdateFavoriteAssetsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateFavoriteAssets>>,
+        TError,
+        {data: BodyType<UpdateFavoriteAssetsInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateFavoriteAssetsMutationOptions(options));
+    }
+
+export const getGetAssetsUrl = () => {
+
+
+
+
+  return `/api/assets`
+}
+
+/**
+ * @summary List every asset available for tracking and favoriting
+ */
+export const getAssets = async ( options?: RequestInit): Promise<AssetInfo[]> => {
+
+  return customFetch<AssetInfo[]>(getGetAssetsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAssetsQueryKey = () => {
+    return [
+    `/api/assets`
+    ] as const;
+    }
+
+
+export const getGetAssetsQueryOptions = <TData = Awaited<ReturnType<typeof getAssets>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAssets>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAssetsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAssets>>> = ({ signal }) => getAssets({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAssets>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAssetsQueryResult = NonNullable<Awaited<ReturnType<typeof getAssets>>>
+export type GetAssetsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List every asset available for tracking and favoriting
+ */
+
+export function useGetAssets<TData = Awaited<ReturnType<typeof getAssets>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAssets>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAssetsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

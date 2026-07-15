@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db, usersTable, type User, type PremiumPlan } from "@workspace/db";
+import { DEFAULT_FAVORITE_ASSETS, isValidAssetSymbol } from "./assets";
 
 export type AdminPlanAction =
   | "trial_active"
@@ -21,6 +22,7 @@ export interface AccountStatus {
   premiumExpiresAt: string | null;
   daysRemaining: number;
   canCreateAlerts: boolean;
+  favoriteAssets: string[];
 }
 
 /** JIT-provision a local user record for a Clerk-authenticated request. */
@@ -60,6 +62,11 @@ export function computeAccountStatus(user: User): AccountStatus {
   const now = new Date();
   const plan = (user.plan as PremiumPlan) ?? "trial";
 
+  const favoriteAssets =
+    user.favoriteAssets && user.favoriteAssets.length > 0
+      ? user.favoriteAssets
+      : [...DEFAULT_FAVORITE_ASSETS];
+
   if (plan === "monthly" || plan === "yearly") {
     const active =
       !!user.premiumExpiresAt && user.premiumExpiresAt.getTime() > now.getTime();
@@ -77,6 +84,7 @@ export function computeAccountStatus(user: User): AccountStatus {
         : null,
       daysRemaining: 0,
       canCreateAlerts: active,
+      favoriteAssets,
     };
   }
 
@@ -97,7 +105,38 @@ export function computeAccountStatus(user: User): AccountStatus {
     premiumExpiresAt: null,
     daysRemaining,
     canCreateAlerts: inTrial,
+    favoriteAssets,
   };
+}
+
+/**
+ * Persists a user's chosen market-card lineup. Validates every symbol
+ * against the known asset catalog and requires at least one selection, so
+ * the dashboard is never left with an empty grid.
+ */
+export async function updateFavoriteAssets(
+  clerkUserId: string,
+  favoriteAssets: string[],
+): Promise<User> {
+  const unique = Array.from(new Set(favoriteAssets));
+  if (unique.length === 0) {
+    throw new Error("Select at least one asset");
+  }
+  const invalid = unique.filter((s) => !isValidAssetSymbol(s));
+  if (invalid.length > 0) {
+    throw new Error(`Unknown asset symbol(s): ${invalid.join(", ")}`);
+  }
+
+  const [updated] = await db
+    .update(usersTable)
+    .set({ favoriteAssets: unique })
+    .where(eq(usersTable.clerkUserId, clerkUserId))
+    .returning();
+
+  if (!updated) {
+    throw new Error(`User ${clerkUserId} not found`);
+  }
+  return updated;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;

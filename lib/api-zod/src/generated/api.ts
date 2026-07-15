@@ -32,6 +32,11 @@ export const GetPricesResponse = zod.object({
   "pair": zod.string().describe('Currency pair, e.g. EUR\/USD'),
   "rate": zod.number()
 })),
+  "crypto": zod.array(zod.object({
+  "symbol": zod.string().describe('Crypto ticker, e.g. BTC, ETH'),
+  "name": zod.string(),
+  "price": zod.number().describe('Price in USD')
+})),
   "stale": zod.boolean().describe('True if the last upstream price fetch failed and this is a cached snapshot')
 })
 
@@ -48,8 +53,40 @@ export const GetAccountResponse = zod.object({
   "trialEndsAt": zod.coerce.date(),
   "premiumExpiresAt": zod.coerce.date().nullable(),
   "daysRemaining": zod.number().describe('Days left in the free trial, 0 if expired or premium'),
-  "canCreateAlerts": zod.boolean()
+  "canCreateAlerts": zod.boolean(),
+  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards')
 })
+
+
+/**
+ * @summary Set the asset symbols shown as market cards on the dashboard
+ */
+export const UpdateFavoriteAssetsBody = zod.object({
+  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols to show as market cards; must be non-empty and match known symbols from \/assets')
+})
+
+export const UpdateFavoriteAssetsResponse = zod.object({
+  "isPremium": zod.boolean(),
+  "plan": zod.enum(['trial', 'monthly', 'yearly']),
+  "planStatus": zod.enum(['active', 'expired']),
+  "trialStartedAt": zod.coerce.date(),
+  "trialEndsAt": zod.coerce.date(),
+  "premiumExpiresAt": zod.coerce.date().nullable(),
+  "daysRemaining": zod.number().describe('Days left in the free trial, 0 if expired or premium'),
+  "canCreateAlerts": zod.boolean(),
+  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards')
+})
+
+
+/**
+ * @summary List every asset available for tracking and favoriting
+ */
+export const GetAssetsResponseItem = zod.object({
+  "symbol": zod.string(),
+  "name": zod.string(),
+  "category": zod.enum(['metal', 'forex', 'crypto'])
+})
+export const GetAssetsResponse = zod.array(GetAssetsResponseItem)
 
 
 /**

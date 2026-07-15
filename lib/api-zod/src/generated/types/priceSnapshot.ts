@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { CryptoPrice } from './cryptoPrice';
 import type { ForexRate } from './forexRate';
 import type { MetalPrice } from './metalPrice';
 
@@ -12,6 +13,7 @@ export interface PriceSnapshot {
   updatedAt: Date;
   metals: MetalPrice[];
   forex: ForexRate[];
+  crypto: CryptoPrice[];
   /** True if the last upstream price fetch failed and this is a cached snapshot */
   stale: boolean;
 }

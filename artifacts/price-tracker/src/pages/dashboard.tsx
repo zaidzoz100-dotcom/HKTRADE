@@ -4,6 +4,7 @@ import { useUser } from "@clerk/react";
 import { LivePrices } from "@/components/live-prices";
 import { AlertsList } from "@/components/alerts-list";
 import { CreateAlertDialog } from "@/components/create-alert-dialog";
+import { CustomizeAssetsDialog } from "@/components/customize-assets-dialog";
 import { AlarmOverlay } from "@/components/alarm-overlay";
 import { LogoutButton } from "@/App";
 import { BrandLogo } from "@/components/brand-logo";
@@ -105,7 +106,14 @@ export default function TrackerDashboard() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [presetAsset, setPresetAsset] = useState<string | undefined>(undefined);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
   const trial = useTrialGate();
+  // Same query key as useTrialGate's useGetAccount call, so react-query
+  // dedupes this into a single network request/cache entry.
+  const { data: account } = useGetAccount({
+    query: { queryKey: getGetAccountQueryKey() },
+  });
+  const favoriteAssets = account?.favoriteAssets ?? [];
   const { data: prices } = useGetPrices({
     query: {
       queryKey: getGetPricesQueryKey(),
@@ -162,16 +170,23 @@ export default function TrackerDashboard() {
         </div>
         <LivePrices
           prices={prices}
+          favoriteAssets={favoriteAssets}
           onSelectAsset={(symbol) => {
             setPresetAsset(symbol);
             setAlertDialogOpen(true);
           }}
+          onCustomize={() => setCustomizeOpen(true)}
         />
         <CreateAlertDialog
           open={alertDialogOpen}
           onOpenChange={setAlertDialogOpen}
           presetAssetSymbol={presetAsset}
           hideTrigger
+        />
+        <CustomizeAssetsDialog
+          open={customizeOpen}
+          onOpenChange={setCustomizeOpen}
+          selected={favoriteAssets}
         />
         <AlertsList />
       </main>

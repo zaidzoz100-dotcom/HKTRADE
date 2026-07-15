@@ -59,6 +59,42 @@ paths:
                 $ref: "#/components/schemas/AccountStatus"
         "401":
           description: Not authenticated
+  /account/favorites:
+    patch:
+      operationId: updateFavoriteAssets
+      tags: [account]
+      summary: Set the asset symbols shown as market cards on the dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFavoriteAssetsInput"
+      responses:
+        "200":
+          description: Updated account status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountStatus"
+        "400":
+          description: Invalid selection
+        "401":
+          description: Not authenticated
+  /assets:
+    get:
+      operationId: getAssets
+      tags: [prices]
+      summary: List every asset available for tracking and favoriting
+      responses:
+        "200":
+          description: All available assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetInfo"
   /alerts:
     get:
       operationId: listAlerts
@@ -262,6 +298,18 @@ components:
         rate:
           type: number
       required: [pair, rate]
+    CryptoPrice:
+      type: object
+      properties:
+        symbol:
+          type: string
+          description: "Crypto ticker, e.g. BTC, ETH"
+        name:
+          type: string
+        price:
+          type: number
+          description: "Price in USD"
+      required: [symbol, name, price]
     PriceSnapshot:
       type: object
       properties:
@@ -276,10 +324,34 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ForexRate"
+        crypto:
+          type: array
+          items:
+            $ref: "#/components/schemas/CryptoPrice"
         stale:
           type: boolean
           description: "True if the last upstream price fetch failed and this is a cached snapshot"
-      required: [updatedAt, metals, forex, stale]
+      required: [updatedAt, metals, forex, crypto, stale]
+    AssetInfo:
+      type: object
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          enum: [metal, forex, crypto]
+      required: [symbol, name, category]
+    UpdateFavoriteAssetsInput:
+      type: object
+      properties:
+        favoriteAssets:
+          type: array
+          items:
+            type: string
+          description: "Asset symbols to show as market cards; must be non-empty and match known symbols from /assets"
+      required: [favoriteAssets]
     Alert:
       type: object
       properties:
@@ -371,6 +443,11 @@ components:
           description: "Days left in the free trial, 0 if expired or premium"
         canCreateAlerts:
           type: boolean
+        favoriteAssets:
+          type: array
+          items:
+            type: string
+          description: "Asset symbols the user has chosen to show as market cards"
       required:
         - isPremium
         - plan
@@ -380,6 +457,7 @@ components:
         - premiumExpiresAt
         - daysRemaining
         - canCreateAlerts
+        - favoriteAssets
     SubscriptionRequiredError:
       type: object
       properties:

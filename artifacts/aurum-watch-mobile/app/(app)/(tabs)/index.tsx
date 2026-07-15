@@ -14,6 +14,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLivePrices } from '@/hooks/useLivePrices';
 import { CreateAlertSheet } from '@/components/CreateAlertSheet';
 import { UpgradeSheet } from '@/components/UpgradeSheet';
+import { NotificationControlCenter } from '@/components/NotificationControlCenter';
 
 type PriceAsset = { symbol: string; name: string; price: number; category: 'metal' | 'forex' | 'crypto' };
 
@@ -135,6 +136,8 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
       )}
+
+      <NotificationControlCenter />
 
       <View style={styles.headerRow}>
         <Text style={styles.sectionTitle}>Live Markets</Text>

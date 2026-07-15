@@ -4,3 +4,4 @@
 - [drizzle-kit push NOT NULL/UNIQUE on non-empty table](drizzle-push-notnull-nonempty-table.md) — interactive prompt fails non-TTY; backfill via raw SQL first.
 - [Aurum Watch referral system](aurum-watch-referral-system.md) — how referral codes/rewards are modeled and redeemed; read before touching trial or invite logic.
 - [Aurum Watch live prices via Socket.io](aurum-watch-live-prices-socket.md) — WS push replaced price polling; path nested under existing `/api` proxy path, no artifact.toml change needed.
+- [Clerk Expo Android native module crash](clerk-expo-android-native-module-crash.md) — @clerk/expo >=3.4.0 crashes on Android in Expo Go; pin to 3.3.1.

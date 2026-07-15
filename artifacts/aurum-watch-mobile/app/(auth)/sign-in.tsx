@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -92,10 +93,8 @@ export default function SignInScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.brand}>
-        <View style={styles.brandMark}>
-          <Ionicons name="diamond" size={26} color={colors.primary} />
-        </View>
-        <Text style={styles.brandTitle}>AURUM WATCH</Text>
+        <Image source={require('@/assets/images/icon.png')} style={styles.brandMark} />
+        <Text style={styles.brandTitle}>FOREX ALARM</Text>
         <Text style={styles.brandSubtitle}>Live gold, silver &amp; forex alerts</Text>
       </View>
 
@@ -206,12 +205,7 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     brandMark: {
       width: 56,
       height: 56,
-      borderRadius: 28,
-      backgroundColor: colors.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
+      borderRadius: 14,
       marginBottom: 14,
     },
     brandTitle: {

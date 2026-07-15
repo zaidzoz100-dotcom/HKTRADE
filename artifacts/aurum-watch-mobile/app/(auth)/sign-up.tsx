@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -128,9 +129,7 @@ export default function SignUpScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.brand}>
-        <View style={styles.brandMark}>
-          <Ionicons name="diamond" size={26} color={colors.primary} />
-        </View>
+        <Image source={require('@/assets/images/icon.png')} style={styles.brandMark} />
         <Text style={styles.brandTitle}>CREATE ACCOUNT</Text>
         <Text style={styles.brandSubtitle}>Start your 4-day free trial</Text>
       </View>
@@ -223,12 +222,7 @@ function createStyles(colors: ReturnType<typeof useColors>) {
     brandMark: {
       width: 56,
       height: 56,
-      borderRadius: 28,
-      backgroundColor: colors.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-      alignItems: 'center',
-      justifyContent: 'center',
+      borderRadius: 14,
       marginBottom: 14,
     },
     brandTitle: {

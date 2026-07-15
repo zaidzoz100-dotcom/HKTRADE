@@ -49,7 +49,7 @@ export default function AccountScreen() {
   async function handleShareCode() {
     if (!account?.referralCode) return;
     await Share.share({
-      message: `Join me on Aurum Watch and get bonus trial days — use my referral code ${account.referralCode}.`,
+      message: `Join me on Forex Alarm and get bonus trial days — use my referral code ${account.referralCode}.`,
     });
   }
 

@@ -1,6 +1,6 @@
 kind = "mobile"
 previewPath = "/mobile/"
-title = "Aurum Watch"
+title = "Forex Alarm"
 version = "1.0.0"
 id = "artifacts/aurum-watch-mobile"
 router = "expo-domain"

@@ -22,6 +22,14 @@ import {
 } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { UpgradeSheet } from '@/components/UpgradeSheet';
+import { usePushPermissionStatus, usePushRegistration } from '@/hooks/usePushRegistration';
+
+const PUSH_STATUS_LABEL: Record<string, string> = {
+  granted: 'Enabled',
+  denied: 'Denied',
+  undetermined: 'Not enabled',
+  unavailable: 'Unavailable on this device',
+};
 
 export default function AccountScreen() {
   const colors = useColors();
@@ -31,6 +39,8 @@ export default function AccountScreen() {
   const { user } = useUser();
   const { data: account } = useGetAccount({ query: { queryKey: getGetAccountQueryKey() } });
   const applyReferral = useApplyReferral();
+  const { status: pushStatus, refresh: refreshPushStatus, openSettings } = usePushPermissionStatus();
+  const { register: registerPush } = usePushRegistration(false);
 
   const [referralInput, setReferralInput] = useState('');
   const [referralError, setReferralError] = useState<string | null>(null);
@@ -38,6 +48,34 @@ export default function AccountScreen() {
   const [copied, setCopied] = useState(false);
 
   const styles = createStyles(colors);
+
+  // If the user grants notification permission from the OS Settings app
+  // (after tapping "Denied" below) rather than from the in-app prompt, make
+  // sure the device still gets registered for push once we detect the
+  // permission change on foreground.
+  React.useEffect(() => {
+    if (pushStatus === 'granted') {
+      registerPush();
+    }
+  }, [pushStatus, registerPush]);
+
+  async function handlePushRowPress() {
+    if (pushStatus === 'denied') {
+      RNAlert.alert(
+        'Notifications disabled',
+        'Enable notifications in Settings to receive price alerts.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => openSettings() },
+        ],
+      );
+      return;
+    }
+    if (pushStatus === 'undetermined') {
+      await registerPush();
+      refreshPushStatus();
+    }
+  }
 
   async function handleCopyCode() {
     if (!account?.referralCode) return;
@@ -124,6 +162,45 @@ export default function AccountScreen() {
           </>
         ) : (
           <ActivityIndicator color={colors.primary} />
+        )}
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Notifications</Text>
+        <Pressable
+          style={({ pressed }) => [
+            styles.statRow,
+            pushStatus !== 'granted' && pushStatus !== 'unavailable' && pressed && styles.pressed,
+          ]}
+          onPress={handlePushRowPress}
+          disabled={pushStatus === 'granted' || pushStatus === 'unavailable'}
+        >
+          <Text style={styles.statLabel}>Push alerts</Text>
+          <View style={styles.pushStatusValue}>
+            <Text
+              style={[
+                styles.statValue,
+                {
+                  color:
+                    pushStatus === 'granted'
+                      ? colors.success
+                      : pushStatus === 'denied'
+                        ? colors.destructive
+                        : colors.mutedForeground,
+                },
+              ]}
+            >
+              {PUSH_STATUS_LABEL[pushStatus]}
+            </Text>
+            {(pushStatus === 'denied' || pushStatus === 'undetermined') && (
+              <Ionicons name="chevron-forward" size={14} color={colors.mutedForeground} />
+            )}
+          </View>
+        </Pressable>
+        {pushStatus === 'denied' && (
+          <Text style={styles.cardSubtitle}>
+            Tap above to open Settings and re-enable notifications.
+          </Text>
         )}
       </View>
 
@@ -220,9 +297,14 @@ function createStyles(colors: ReturnType<typeof useColors>) {
       fontSize: 12,
       lineHeight: 17,
     },
-    statRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    statRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
     statLabel: { color: colors.mutedForeground, fontFamily: 'Inter_400Regular', fontSize: 13 },
     statValue: { color: colors.foreground, fontFamily: 'Inter_700Bold', fontSize: 13 },
+    pushStatusValue: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     upgradeButton: {
       flexDirection: 'row',
       alignItems: 'center',

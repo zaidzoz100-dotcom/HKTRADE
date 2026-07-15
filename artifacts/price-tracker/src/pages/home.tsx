@@ -36,7 +36,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center text-center px-4 gap-8">
+      <main className="flex-1 flex flex-col items-center text-center px-4 pt-28 pb-16 md:pt-40 gap-8">
         <div className="space-y-4 max-w-2xl">
           <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
             Live gold, silver &amp; forex — with{' '}

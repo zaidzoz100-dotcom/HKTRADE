@@ -51,27 +51,6 @@
     50% { opacity: 0.8; transform: scale(1.02); }
   }
 
-  --animate-orb-float-a: orb-float-a 26s ease-in-out infinite;
-  --animate-orb-float-b: orb-float-b 32s ease-in-out infinite;
-  --animate-orb-float-c: orb-float-c 38s ease-in-out infinite;
-  --animate-particle-drift: particle-drift 20s ease-in-out infinite;
-
-  @keyframes orb-float-a {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(4rem, 3rem) scale(1.08); }
-  }
-  @keyframes orb-float-b {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-3rem, 4rem) scale(1.1); }
-  }
-  @keyframes orb-float-c {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(3rem, -3rem) scale(1.05); }
-  }
-  @keyframes particle-drift {
-    0%, 100% { transform: translate(0, 0); opacity: var(--tw-particle-opacity, 0.25); }
-    50% { transform: translate(0, calc(var(--particle-drift, 24px) * -1)); }
-  }
 }
 
 :root {

@@ -1,0 +1,23 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "Aurum Watch"
+version = "1.0.0"
+id = "artifacts/aurum-watch-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/mobile/" ]
+localPort = 20931
+
+[services.development]
+run = "pnpm --filter @workspace/aurum-watch-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/aurum-watch-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/aurum-watch-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "20931"
+BASE_PATH = "/mobile/"

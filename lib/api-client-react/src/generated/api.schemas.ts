@@ -77,6 +77,11 @@ export interface PushUnsubscribeInput {
   endpoint: string;
 }
 
+export interface RegisterExpoPushTokenInput {
+  /** Expo push token (e.g. ExponentPushToken[...]) from expo-notifications */
+  token: string;
+}
+
 export interface UpdateFavoriteAssetsInput {
   /** Asset symbols to show as market cards; must be non-empty and match known symbols from /assets */
   favoriteAssets: string[];

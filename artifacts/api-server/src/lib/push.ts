@@ -1,7 +1,15 @@
 import webpush from "web-push";
+import { Expo, type ExpoPushMessage } from "expo-server-sdk";
 import { eq } from "drizzle-orm";
-import { db, pushSubscriptionsTable, type PushSubscription } from "@workspace/db";
+import {
+  db,
+  pushSubscriptionsTable,
+  expoPushTokensTable,
+  type PushSubscription,
+} from "@workspace/db";
 import { logger } from "./logger";
+
+const expo = new Expo();
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
@@ -60,10 +68,74 @@ export async function removeSubscription(endpoint: string): Promise<void> {
   await db.delete(pushSubscriptionsTable).where(eq(pushSubscriptionsTable.endpoint, endpoint));
 }
 
+/** Registers (or re-registers) an Expo push token for the given user, keyed by token so a device re-registering just updates its owner. */
+export async function saveExpoPushToken(clerkUserId: string, token: string): Promise<void> {
+  await db
+    .insert(expoPushTokensTable)
+    .values({ clerkUserId, token })
+    .onConflictDoUpdate({
+      target: expoPushTokensTable.token,
+      set: { clerkUserId },
+    });
+}
+
+/** Removes an Expo push token, e.g. when the user opts out on that device. */
+export async function removeExpoPushToken(token: string): Promise<void> {
+  await db.delete(expoPushTokensTable).where(eq(expoPushTokensTable.token, token));
+}
+
 interface PushPayload {
   title: string;
   body: string;
   tag?: string;
+}
+
+/**
+ * Sends a push notification to every Expo (native mobile) device the user
+ * has registered. Separate delivery path from `sendPushToUser` (Web Push) —
+ * a user with both the web app and mobile app installed gets both.
+ */
+export async function sendExpoPushToUser(clerkUserId: string, payload: PushPayload): Promise<void> {
+  const tokens = await db
+    .select()
+    .from(expoPushTokensTable)
+    .where(eq(expoPushTokensTable.clerkUserId, clerkUserId));
+
+  if (tokens.length === 0) return;
+
+  const validTokens = tokens.filter((t) => {
+    if (!Expo.isExpoPushToken(t.token)) {
+      logger.warn({ token: t.token }, "Dropping malformed Expo push token");
+      return false;
+    }
+    return true;
+  });
+  if (validTokens.length === 0) return;
+
+  const messages: ExpoPushMessage[] = validTokens.map((t) => ({
+    to: t.token,
+    title: payload.title,
+    body: payload.body,
+    sound: "default",
+    ...(payload.tag ? { data: { tag: payload.tag } } : {}),
+  }));
+
+  const chunks = expo.chunkPushNotifications(messages);
+  for (const chunk of chunks) {
+    try {
+      const tickets = await expo.sendPushNotificationsAsync(chunk);
+      tickets.forEach((ticket, i) => {
+        if (ticket.status === "error" && ticket.details?.error === "DeviceNotRegistered") {
+          const badToken = chunk[i].to as string;
+          void removeExpoPushToken(badToken).catch((err) => {
+            logger.error({ err, clerkUserId }, "Failed to prune stale Expo push token");
+          });
+        }
+      });
+    } catch (err) {
+      logger.error({ err, clerkUserId }, "Failed to send Expo push notification chunk");
+    }
+  }
 }
 
 /**

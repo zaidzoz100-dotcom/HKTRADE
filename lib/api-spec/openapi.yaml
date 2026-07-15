@@ -193,6 +193,40 @@ paths:
           description: Unsubscribed
         "401":
           description: Not authenticated
+  /push/expo-token:
+    post:
+      operationId: registerExpoPushToken
+      tags: [push]
+      summary: Register an Expo push token for the current user (native mobile app)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterExpoPushTokenInput"
+      responses:
+        "204":
+          description: Registered
+        "400":
+          description: Invalid token payload
+        "401":
+          description: Not authenticated
+  /push/expo-token/unregister:
+    post:
+      operationId: unregisterExpoPushToken
+      tags: [push]
+      summary: Remove an Expo push token (opt out on this device)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterExpoPushTokenInput"
+      responses:
+        "204":
+          description: Unregistered
+        "401":
+          description: Not authenticated
   /alerts:
     get:
       operationId: listAlerts
@@ -470,6 +504,13 @@ components:
         endpoint:
           type: string
       required: [endpoint]
+    RegisterExpoPushTokenInput:
+      type: object
+      properties:
+        token:
+          type: string
+          description: "Expo push token (e.g. ExponentPushToken[...]) from expo-notifications"
+      required: [token]
     UpdateFavoriteAssetsInput:
       type: object
       properties:

@@ -34,6 +34,7 @@ export * from './priceSnapshot';
 export * from './pushSubscribeInput';
 export * from './pushSubscriptionKeys';
 export * from './pushUnsubscribeInput';
+export * from './registerExpoPushTokenInput';
 export * from './subscriptionRequiredError';
 export * from './updateFavoriteAssetsInput';
 export * from './vapidPublicKeyResponse';

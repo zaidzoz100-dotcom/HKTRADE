@@ -193,6 +193,26 @@ export const UnsubscribePushResponse = zod.void()
 
 
 /**
+ * @summary Register an Expo push token for the current user (native mobile app)
+ */
+export const RegisterExpoPushTokenBody = zod.object({
+  "token": zod.string().describe('Expo push token (e.g. ExponentPushToken[...]) from expo-notifications')
+})
+
+export const RegisterExpoPushTokenResponse = zod.void()
+
+
+/**
+ * @summary Remove an Expo push token (opt out on this device)
+ */
+export const UnregisterExpoPushTokenBody = zod.object({
+  "token": zod.string().describe('Expo push token (e.g. ExponentPushToken[...]) from expo-notifications')
+})
+
+export const UnregisterExpoPushTokenResponse = zod.void()
+
+
+/**
  * @summary List all alerts
  */
 export const ListAlertsResponseItem = zod.object({

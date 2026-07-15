@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 import { db, alertsTable, type Alert } from "@workspace/db";
 import { logger } from "./logger";
-import { sendPushToUser } from "./push";
+import { sendPushToUser, sendExpoPushToUser } from "./push";
 import { broadcastPriceSnapshot, registerSnapshotProvider } from "./socket";
 
 export interface MetalPrice {
@@ -174,12 +174,16 @@ async function checkAlerts(metals: MetalPrice[], forex: ForexRate[], crypto: Cry
       // race with a concurrent poll tick double-triggering the same alert).
       if (updated) {
         const direction = alert.direction === "above" ? "rose above" : "dropped below";
-        void sendPushToUser(alert.clerkUserId, {
+        const pushPayload = {
           title: `${alert.assetSymbol} target hit!`,
           body: `${alert.assetSymbol} ${direction} ${alert.targetPrice}`,
           tag: `forex-alarm-${alert.id}`,
-        }).catch((err) => {
-          logger.error({ err, alertId: alert.id }, "Failed to send push for triggered alert");
+        };
+        void sendPushToUser(alert.clerkUserId, pushPayload).catch((err) => {
+          logger.error({ err, alertId: alert.id }, "Failed to send web push for triggered alert");
+        });
+        void sendExpoPushToUser(alert.clerkUserId, pushPayload).catch((err) => {
+          logger.error({ err, alertId: alert.id }, "Failed to send Expo push for triggered alert");
         });
       }
     }

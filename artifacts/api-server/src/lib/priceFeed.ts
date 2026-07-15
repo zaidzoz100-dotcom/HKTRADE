@@ -2,6 +2,7 @@ import { eq, and } from "drizzle-orm";
 import { db, alertsTable, type Alert } from "@workspace/db";
 import { logger } from "./logger";
 import { sendPushToUser } from "./push";
+import { broadcastPriceSnapshot, registerSnapshotProvider } from "./socket";
 
 export interface MetalPrice {
   symbol: string;
@@ -204,18 +205,32 @@ async function refreshPrices(): Promise<void> {
       crypto,
       stale: false,
     };
+    // Push the fresh snapshot to every connected client immediately. This
+    // is a single broadcast regardless of how many clients are connected —
+    // adding more users never adds more upstream fetches or more per-client
+    // server work.
+    broadcastPriceSnapshot(cachedSnapshot);
     await checkAlerts(metals, forex, crypto);
   } catch (err) {
     logger.error({ err }, "Failed to refresh prices");
     if (cachedSnapshot) {
       cachedSnapshot = { ...cachedSnapshot, stale: true };
+      broadcastPriceSnapshot(cachedSnapshot);
     }
   }
 }
 
-const POLL_INTERVAL_MS = 20_000;
+// Metals/forex sources are free, keyless, and not documented as
+// aggressively rate-limited, so we can poll them often enough to feel live
+// over the WebSocket push without risking a ban — 5s, not 1s: still a
+// single fetch per tick server-side no matter how many clients are
+// connected, and it's honest about what these free upstream feeds actually
+// refresh at (they are not literal tick-by-tick market data). Crypto has
+// its own internal 60s throttle in fetchCrypto() regardless of this value.
+const POLL_INTERVAL_MS = 5_000;
 
 export function startPricePolling(): void {
+  registerSnapshotProvider(() => cachedSnapshot);
   if (pollTimer) return;
   void refreshPrices();
   pollTimer = setInterval(() => {

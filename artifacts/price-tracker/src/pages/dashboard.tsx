@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useGetPrices, getGetPricesQueryKey, useGetAccount, getGetAccountQueryKey } from "@workspace/api-client-react";
+import { useGetAccount, getGetAccountQueryKey } from "@workspace/api-client-react";
+import { useLivePrices } from "@/hooks/use-live-prices";
 import { useUser } from "@clerk/react";
 import { LivePrices } from "@/components/live-prices";
 import { AlertsList } from "@/components/alerts-list";
@@ -115,13 +116,7 @@ export default function TrackerDashboard() {
     query: { queryKey: getGetAccountQueryKey() },
   });
   const favoriteAssets = account?.favoriteAssets ?? [];
-  const { data: prices } = useGetPrices({
-    query: {
-      queryKey: getGetPricesQueryKey(),
-      refetchInterval: 15000,
-      refetchOnWindowFocus: true,
-    }
-  });
+  const { data: prices } = useLivePrices();
 
   return (
     <div className="min-h-[100dvh] text-foreground pb-20">

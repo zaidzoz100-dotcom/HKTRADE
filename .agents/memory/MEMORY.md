@@ -3,3 +3,4 @@
 - [Express sub-router auth ordering gotcha](express-router-use-auth-ordering.md) — unscoped `router.use(requireAuth)` in one sub-router 401s routers mounted after it in api-server.
 - [drizzle-kit push NOT NULL/UNIQUE on non-empty table](drizzle-push-notnull-nonempty-table.md) — interactive prompt fails non-TTY; backfill via raw SQL first.
 - [Aurum Watch referral system](aurum-watch-referral-system.md) — how referral codes/rewards are modeled and redeemed; read before touching trial or invite logic.
+- [Aurum Watch live prices via Socket.io](aurum-watch-live-prices-socket.md) — WS push replaced price polling; path nested under existing `/api` proxy path, no artifact.toml change needed.

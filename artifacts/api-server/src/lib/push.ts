@@ -124,6 +124,10 @@ export async function sendExpoPushToUser(clerkUserId: string, payload: PushPaylo
     title: payload.title,
     body: payload.body,
     sound: "default",
+    // channelId must match the channel registered in app/_layout.tsx so
+    // Android 8+ routes the notification correctly instead of silently
+    // dropping it.
+    channelId: "price-alerts",
     ...(payload.tag ? { data: { tag: payload.tag } } : {}),
   }));
 

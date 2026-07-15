@@ -2,19 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Linking, Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import {
   useRegisterExpoPushToken,
   useUnregisterExpoPushToken,
 } from '@workspace/api-client-react';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// NOTE: setNotificationHandler is intentionally NOT here — it is set once at
+// module scope in app/_layout.tsx so it is always registered before any
+// screen or notification can arrive, even on a cold start.
 
 export type PushPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
 
@@ -54,7 +50,15 @@ export function usePushRegistration(enabled: boolean) {
     }
     if (!granted) return;
 
-    const tokenResponse = await Notifications.getExpoPushTokenAsync();
+    // projectId is required in SDK 50+ — without it getExpoPushTokenAsync
+    // fails in production builds or returns a dev-only token that Expo's
+    // push service rejects for real devices.
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      Constants.easConfig?.projectId;
+    const tokenResponse = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined,
+    );
     registeredToken.current = tokenResponse.data;
     registerToken.mutate({ data: { token: tokenResponse.data } });
   }, [registerToken]);

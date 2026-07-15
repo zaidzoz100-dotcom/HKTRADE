@@ -1,6 +1,7 @@
 import { eq, and } from "drizzle-orm";
 import { db, alertsTable, type Alert } from "@workspace/db";
 import { logger } from "./logger";
+import { sendPushToUser } from "./push";
 
 export interface MetalPrice {
   symbol: string;
@@ -156,16 +157,30 @@ async function checkAlerts(metals: MetalPrice[], forex: ForexRate[], crypto: Cry
         : currentPrice <= alert.targetPrice;
 
     if (shouldTrigger) {
-      await db
+      const [updated] = await db
         .update(alertsTable)
         .set({ status: "triggered", triggeredAt: new Date() })
         .where(
           and(eq(alertsTable.id, alert.id), eq(alertsTable.status, "active")),
-        );
+        )
+        .returning();
       logger.info(
         { alertId: alert.id, assetSymbol: alert.assetSymbol, currentPrice },
         "Alert triggered",
       );
+
+      // Only push if this request actually flipped the row (guards against a
+      // race with a concurrent poll tick double-triggering the same alert).
+      if (updated) {
+        const direction = alert.direction === "above" ? "rose above" : "dropped below";
+        void sendPushToUser(alert.clerkUserId, {
+          title: `${alert.assetSymbol} target hit!`,
+          body: `${alert.assetSymbol} ${direction} ${alert.targetPrice}`,
+          tag: `forex-alarm-${alert.id}`,
+        }).catch((err) => {
+          logger.error({ err, alertId: alert.id }, "Failed to send push for triggered alert");
+        });
+      }
     }
   }
 }

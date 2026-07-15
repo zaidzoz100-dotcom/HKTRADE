@@ -55,6 +55,28 @@ export interface AssetInfo {
   category: AssetInfoCategory;
 }
 
+export interface VapidPublicKeyResponse {
+  /**
+     * Base64url VAPID public key, or null if push isn't configured on this server
+     * @nullable
+     */
+  publicKey: string | null;
+}
+
+export interface PushSubscriptionKeys {
+  p256dh: string;
+  auth: string;
+}
+
+export interface PushSubscribeInput {
+  endpoint: string;
+  keys: PushSubscriptionKeys;
+}
+
+export interface PushUnsubscribeInput {
+  endpoint: string;
+}
+
 export interface UpdateFavoriteAssetsInput {
   /** Asset symbols to show as market cards; must be non-empty and match known symbols from /assets */
   favoriteAssets: string[];

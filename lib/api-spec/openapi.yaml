@@ -18,6 +18,8 @@ tags:
     description: Authenticated account and subscription status
   - name: admin
     description: Admin-only user management, protected by an admin password
+  - name: push
+    description: Web Push subscription management for background alert notifications
 paths:
   /healthz:
     get:
@@ -95,6 +97,52 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AssetInfo"
+  /push/vapid-public-key:
+    get:
+      operationId: getPushVapidPublicKey
+      tags: [push]
+      summary: Get the VAPID public key needed to create a browser PushSubscription
+      responses:
+        "200":
+          description: VAPID public key, or null if push notifications aren't configured on this server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VapidPublicKeyResponse"
+  /push/subscribe:
+    post:
+      operationId: subscribePush
+      tags: [push]
+      summary: Register a browser PushSubscription for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushSubscribeInput"
+      responses:
+        "204":
+          description: Subscribed
+        "400":
+          description: Invalid subscription payload
+        "401":
+          description: Not authenticated
+  /push/unsubscribe:
+    post:
+      operationId: unsubscribePush
+      tags: [push]
+      summary: Remove a browser PushSubscription (opt out on this device)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushUnsubscribeInput"
+      responses:
+        "204":
+          description: Unsubscribed
+        "401":
+          description: Not authenticated
   /alerts:
     get:
       operationId: listAlerts
@@ -343,6 +391,35 @@ components:
           type: string
           enum: [metal, forex, crypto]
       required: [symbol, name, category]
+    VapidPublicKeyResponse:
+      type: object
+      properties:
+        publicKey:
+          type: ["string", "null"]
+          description: "Base64url VAPID public key, or null if push isn't configured on this server"
+      required: [publicKey]
+    PushSubscriptionKeys:
+      type: object
+      properties:
+        p256dh:
+          type: string
+        auth:
+          type: string
+      required: [p256dh, auth]
+    PushSubscribeInput:
+      type: object
+      properties:
+        endpoint:
+          type: string
+        keys:
+          $ref: "#/components/schemas/PushSubscriptionKeys"
+      required: [endpoint, keys]
+    PushUnsubscribeInput:
+      type: object
+      properties:
+        endpoint:
+          type: string
+      required: [endpoint]
     UpdateFavoriteAssetsInput:
       type: object
       properties:

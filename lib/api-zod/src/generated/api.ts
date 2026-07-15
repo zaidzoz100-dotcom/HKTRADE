@@ -90,6 +90,38 @@ export const GetAssetsResponse = zod.array(GetAssetsResponseItem)
 
 
 /**
+ * @summary Get the VAPID public key needed to create a browser PushSubscription
+ */
+export const GetPushVapidPublicKeyResponse = zod.object({
+  "publicKey": zod.string().nullable().describe('Base64url VAPID public key, or null if push isn\'t configured on this server')
+})
+
+
+/**
+ * @summary Register a browser PushSubscription for the current user
+ */
+export const SubscribePushBody = zod.object({
+  "endpoint": zod.string(),
+  "keys": zod.object({
+  "p256dh": zod.string(),
+  "auth": zod.string()
+})
+})
+
+export const SubscribePushResponse = zod.void()
+
+
+/**
+ * @summary Remove a browser PushSubscription (opt out on this device)
+ */
+export const UnsubscribePushBody = zod.object({
+  "endpoint": zod.string()
+})
+
+export const UnsubscribePushResponse = zod.void()
+
+
+/**
  * @summary List all alerts
  */
 export const ListAlertsResponseItem = zod.object({

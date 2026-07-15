@@ -5,6 +5,7 @@ import assetsRouter from "./assets";
 import alertsRouter from "./alerts";
 import accountRouter from "./account";
 import adminRouter from "./admin";
+import pushRouter from "./push";
 import { startPricePolling } from "../lib/priceFeed";
 
 const router: IRouter = Router();
@@ -15,6 +16,7 @@ router.use(assetsRouter);
 router.use(accountRouter);
 router.use(alertsRouter);
 router.use(adminRouter);
+router.use(pushRouter);
 
 startPricePolling();
 

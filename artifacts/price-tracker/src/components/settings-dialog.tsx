@@ -13,10 +13,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Play, Bell, BellOff, BellRing, Settings2 } from "lucide-react";
+import { Play, Bell, BellOff, BellRing, Settings2, Smartphone, Loader2 } from "lucide-react";
 import { audioAlarm, RINGTONES, type RingtoneId } from "@/lib/audio-alarm";
 import { getStoredRingtone, setStoredRingtone } from "@/lib/settings";
 import { notificationService } from "@/lib/notifications";
+import {
+  isPushSupported,
+  getExistingSubscription,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "@/lib/push-notifications";
+import {
+  useGetPushVapidPublicKey,
+  useSubscribePush,
+  useUnsubscribePush,
+} from "@workspace/api-client-react";
 
 export function SettingsDialog({
   open,
@@ -28,9 +39,16 @@ export function SettingsDialog({
   const [ringtone, setRingtone] = useState<RingtoneId>(() => getStoredRingtone());
   const [permission, setPermission] = useState(() => notificationService.permission());
 
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const { data: vapid } = useGetPushVapidPublicKey();
+  const subscribePush = useSubscribePush();
+  const unsubscribePush = useUnsubscribePush();
+
   useEffect(() => {
     if (open) {
       setPermission(notificationService.permission());
+      getExistingSubscription().then((sub) => setPushSubscribed(!!sub));
     }
   }, [open]);
 
@@ -44,6 +62,36 @@ export function SettingsDialog({
     audioAlarm.init();
     const result = await notificationService.requestPermission();
     setPermission(result);
+  }
+
+  async function handleEnablePush() {
+    if (!vapid?.publicKey) return;
+    setPushBusy(true);
+    try {
+      const sub = await subscribeToPush(vapid.publicKey);
+      setPermission(notificationService.permission());
+      if (!sub) {
+        setPushBusy(false);
+        return;
+      }
+      await subscribePush.mutateAsync({ data: sub });
+      setPushSubscribed(true);
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleDisablePush() {
+    setPushBusy(true);
+    try {
+      const endpoint = await unsubscribeFromPush();
+      if (endpoint) {
+        await unsubscribePush.mutateAsync({ data: { endpoint } });
+      }
+      setPushSubscribed(false);
+    } finally {
+      setPushBusy(false);
+    }
   }
 
   return (
@@ -103,9 +151,9 @@ export function SettingsDialog({
           </div>
 
           <div className="space-y-3 border-t border-border pt-5">
-            <h3 className="text-sm font-semibold text-foreground">Push Notifications</h3>
+            <h3 className="text-sm font-semibold text-foreground">In-App Alerts</h3>
             <p className="text-xs text-muted-foreground">
-              Get a notification on your device the instant an alarm triggers, even if Forex Alarm is running in the background.
+              Get a notification on your device the instant an alarm triggers, as long as Forex Alarm is still open (even in another tab or minimized).
             </p>
             {permission === "granted" && (
               <div className="flex items-center gap-2 text-sm text-emerald-400 font-mono">
@@ -126,13 +174,61 @@ export function SettingsDialog({
                 className="w-full font-mono uppercase tracking-wide gap-2"
               >
                 <Bell className="h-4 w-4" />
-                Enable Push Notifications
+                Enable Notifications
               </Button>
             )}
             {permission === "unsupported" && (
               <p className="text-xs text-muted-foreground">
-                Push notifications aren't supported in this browser.
+                Notifications aren't supported in this browser.
               </p>
+            )}
+          </div>
+
+          <div className="space-y-3 border-t border-border pt-5">
+            <h3 className="text-sm font-semibold text-foreground">Background Push</h3>
+            <p className="text-xs text-muted-foreground">
+              Keep getting alerts even after you fully close Forex Alarm or your browser. On iPhone, add Forex Alarm to your Home Screen first (Share → Add to Home Screen) — Safari only delivers push to installed apps.
+            </p>
+            {!isPushSupported() ? (
+              <p className="text-xs text-muted-foreground">
+                Background push isn't supported in this browser.
+              </p>
+            ) : !vapid?.publicKey ? (
+              <p className="text-xs text-muted-foreground">
+                Background push isn't configured on this server yet.
+              </p>
+            ) : pushSubscribed ? (
+              <>
+                <div className="flex items-center gap-2 text-sm text-emerald-400 font-mono">
+                  <Smartphone className="h-4 w-4" />
+                  Background push enabled on this device
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDisablePush}
+                  disabled={pushBusy}
+                  className="w-full font-mono uppercase tracking-wide gap-2"
+                >
+                  {pushBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellOff className="h-4 w-4" />}
+                  Disable Background Push
+                </Button>
+              </>
+            ) : permission === "denied" ? (
+              <div className="flex items-center gap-2 text-sm text-red-400 font-mono">
+                <BellOff className="h-4 w-4" />
+                Blocked — enable notifications for this site in your browser settings
+              </div>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleEnablePush}
+                disabled={pushBusy}
+                className="w-full font-mono uppercase tracking-wide gap-2"
+              >
+                {pushBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+                Enable Background Push
+              </Button>
             )}
           </div>
         </div>

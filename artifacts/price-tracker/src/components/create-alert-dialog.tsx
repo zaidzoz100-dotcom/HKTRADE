@@ -11,30 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BellPlus, Lock } from "lucide-react";
 import { audioAlarm } from "@/lib/audio-alarm";
-
-const CONTACT_ADMIN_URL = "https://t.me/hackedtrad";
+import { PricingPlans } from "@/components/pricing-plans";
 
 function SubscriptionRequiredDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px] border-primary/20">
+      <DialogContent className="sm:max-w-[440px] border-primary/20">
         <DialogHeader>
           <DialogTitle className="font-mono uppercase tracking-wider text-primary flex items-center gap-2">
             <Lock className="h-5 w-5" />
             Subscription Required
           </DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground pt-2">
+        <p className="text-sm text-muted-foreground">
           Your 4-day free trial has ended. Upgrade to Premium for unlimited, lifetime access to alerts.
         </p>
-        <a
-          href={CONTACT_ADMIN_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center justify-center w-full font-mono uppercase tracking-widest text-sm bg-primary text-black py-3 rounded-sm hover:bg-primary/90"
-        >
-          Contact Admin to Upgrade to Premium
-        </a>
+        <PricingPlans />
       </DialogContent>
     </Dialog>
   );

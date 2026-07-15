@@ -5,14 +5,16 @@ export default function Home() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col">
+    <div className="min-h-[100dvh] text-foreground flex flex-col">
       <header className="border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BrandLogo size={32} />
-            <div>
-              <h1 className="font-mono font-bold tracking-widest leading-none text-primary uppercase">Forex Alarm</h1>
-              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.2em]">Price Alerts</span>
+          <div className="flex items-center gap-2.5">
+            <BrandLogo size={30} />
+            <div className="flex flex-col justify-center">
+              <h1 className="font-sans font-extrabold text-base leading-none tracking-tight">
+                <span className="text-white">FOREX</span><span className="text-primary">ALARM</span>
+              </h1>
+              <span className="text-[10px] font-sans text-muted-foreground tracking-[0.15em] mt-0.5">Price Alerts</span>
             </div>
           </div>
           <div className="flex items-center gap-3">

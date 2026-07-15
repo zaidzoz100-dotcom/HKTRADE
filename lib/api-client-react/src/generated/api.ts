@@ -21,6 +21,9 @@ import type {
 
 import type {
   AccountStatus,
+  AdminListUsersParams,
+  AdminUpdatePlanInput,
+  AdminUser,
   Alert,
   AlertInput,
   AlertUpdate,
@@ -726,5 +729,161 @@ export const useAcknowledgeAlert = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getAcknowledgeAlertMutationOptions(options));
+    }
+
+export const getAdminListUsersUrl = (params?: AdminListUsersParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/users?${stringifiedParams}` : `/api/admin/users`
+}
+
+/**
+ * @summary List users for the admin panel, optionally filtered by email
+ */
+export const adminListUsers = async (params?: AdminListUsersParams, options?: RequestInit): Promise<AdminUser[]> => {
+
+  return customFetch<AdminUser[]>(getAdminListUsersUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getAdminListUsersQueryKey = (params?: AdminListUsersParams,) => {
+    return [
+    `/api/admin/users`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getAdminListUsersQueryOptions = <TData = Awaited<ReturnType<typeof adminListUsers>>, TError = ErrorType<void>>(params?: AdminListUsersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof adminListUsers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminListUsersQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListUsers>>> = ({ signal }) => adminListUsers(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListUsers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type AdminListUsersQueryResult = NonNullable<Awaited<ReturnType<typeof adminListUsers>>>
+export type AdminListUsersQueryError = ErrorType<void>
+
+
+/**
+ * @summary List users for the admin panel, optionally filtered by email
+ */
+
+export function useAdminListUsers<TData = Awaited<ReturnType<typeof adminListUsers>>, TError = ErrorType<void>>(
+ params?: AdminListUsersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof adminListUsers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getAdminListUsersQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getAdminUpdateUserPlanUrl = (clerkUserId: string,) => {
+
+
+
+
+  return `/api/admin/users/${clerkUserId}`
+}
+
+/**
+ * @summary Manually set a user's plan and active/expired status
+ */
+export const adminUpdateUserPlan = async (clerkUserId: string,
+    adminUpdatePlanInput: AdminUpdatePlanInput, options?: RequestInit): Promise<AdminUser> => {
+
+  return customFetch<AdminUser>(getAdminUpdateUserPlanUrl(clerkUserId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(adminUpdatePlanInput)
+  }
+);}
+
+
+
+
+
+export const getAdminUpdateUserPlanMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUpdateUserPlan>>, TError,{clerkUserId: string;data: BodyType<AdminUpdatePlanInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminUpdateUserPlan>>, TError,{clerkUserId: string;data: BodyType<AdminUpdatePlanInput>}, TContext> => {
+
+const mutationKey = ['adminUpdateUserPlan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminUpdateUserPlan>>, {clerkUserId: string;data: BodyType<AdminUpdatePlanInput>}> = (props) => {
+          const {clerkUserId,data} = props ?? {};
+
+          return  adminUpdateUserPlan(clerkUserId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminUpdateUserPlanMutationResult = NonNullable<Awaited<ReturnType<typeof adminUpdateUserPlan>>>
+    export type AdminUpdateUserPlanMutationBody = BodyType<AdminUpdatePlanInput>
+    export type AdminUpdateUserPlanMutationError = ErrorType<void>
+
+    /**
+ * @summary Manually set a user's plan and active/expired status
+ */
+export const useAdminUpdateUserPlan = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUpdateUserPlan>>, TError,{clerkUserId: string;data: BodyType<AdminUpdatePlanInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminUpdateUserPlan>>,
+        TError,
+        {clerkUserId: string;data: BodyType<AdminUpdatePlanInput>},
+        TContext
+      > => {
+      return useMutation(getAdminUpdateUserPlanMutationOptions(options));
     }
 

@@ -42,8 +42,11 @@ export const GetPricesResponse = zod.object({
  */
 export const GetAccountResponse = zod.object({
   "isPremium": zod.boolean(),
+  "plan": zod.enum(['trial', 'monthly', 'yearly']),
+  "planStatus": zod.enum(['active', 'expired']),
   "trialStartedAt": zod.coerce.date(),
   "trialEndsAt": zod.coerce.date(),
+  "premiumExpiresAt": zod.coerce.date().nullable(),
   "daysRemaining": zod.number().describe('Days left in the free trial, 0 if expired or premium'),
   "canCreateAlerts": zod.boolean()
 })
@@ -166,6 +169,49 @@ export const AcknowledgeAlertResponse = zod.object({
   "createdAt": zod.coerce.date(),
   "triggeredAt": zod.coerce.date().nullable(),
   "acknowledgedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary List users for the admin panel, optionally filtered by email
+ */
+export const AdminListUsersQueryParams = zod.object({
+  "search": zod.coerce.string().optional().describe('Case-insensitive email substring filter')
+})
+
+export const AdminListUsersResponseItem = zod.object({
+  "clerkUserId": zod.string(),
+  "email": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "plan": zod.enum(['trial', 'monthly', 'yearly']),
+  "planStatus": zod.enum(['active', 'expired']),
+  "isPremium": zod.boolean(),
+  "daysRemaining": zod.number(),
+  "premiumExpiresAt": zod.coerce.date().nullable()
+})
+export const AdminListUsersResponse = zod.array(AdminListUsersResponseItem)
+
+
+/**
+ * @summary Manually set a user's plan and active/expired status
+ */
+export const AdminUpdateUserPlanParams = zod.object({
+  "clerkUserId": zod.coerce.string()
+})
+
+export const AdminUpdateUserPlanBody = zod.object({
+  "action": zod.enum(['trial_active', 'trial_expired', 'monthly_active', 'monthly_expired', 'yearly_active', 'yearly_expired'])
+})
+
+export const AdminUpdateUserPlanResponse = zod.object({
+  "clerkUserId": zod.string(),
+  "email": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "plan": zod.enum(['trial', 'monthly', 'yearly']),
+  "planStatus": zod.enum(['active', 'expired']),
+  "isPremium": zod.boolean(),
+  "daysRemaining": zod.number(),
+  "premiumExpiresAt": zod.coerce.date().nullable()
 })
 
 

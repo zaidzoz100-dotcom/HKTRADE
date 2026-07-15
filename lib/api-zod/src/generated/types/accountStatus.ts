@@ -5,11 +5,17 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AccountStatusPlan } from './accountStatusPlan';
+import type { AccountStatusPlanStatus } from './accountStatusPlanStatus';
 
 export interface AccountStatus {
   isPremium: boolean;
+  plan: AccountStatusPlan;
+  planStatus: AccountStatusPlanStatus;
   trialStartedAt: Date;
   trialEndsAt: Date;
+  /** @nullable */
+  premiumExpiresAt: Date | null;
   /** Days left in the free trial, 0 if expired or premium */
   daysRemaining: number;
   canCreateAlerts: boolean;

@@ -108,10 +108,31 @@ export interface AlertUpdate {
   status?: AlertUpdateStatus;
 }
 
+export type AccountStatusPlan = typeof AccountStatusPlan[keyof typeof AccountStatusPlan];
+
+
+export const AccountStatusPlan = {
+  trial: 'trial',
+  monthly: 'monthly',
+  yearly: 'yearly',
+} as const;
+
+export type AccountStatusPlanStatus = typeof AccountStatusPlanStatus[keyof typeof AccountStatusPlanStatus];
+
+
+export const AccountStatusPlanStatus = {
+  active: 'active',
+  expired: 'expired',
+} as const;
+
 export interface AccountStatus {
   isPremium: boolean;
+  plan: AccountStatusPlan;
+  planStatus: AccountStatusPlanStatus;
   trialStartedAt: string;
   trialEndsAt: string;
+  /** @nullable */
+  premiumExpiresAt: string | null;
   /** Days left in the free trial, 0 if expired or premium */
   daysRemaining: number;
   canCreateAlerts: boolean;
@@ -121,4 +142,57 @@ export interface SubscriptionRequiredError {
   error: string;
   contactUrl: string;
 }
+
+export type AdminUserPlan = typeof AdminUserPlan[keyof typeof AdminUserPlan];
+
+
+export const AdminUserPlan = {
+  trial: 'trial',
+  monthly: 'monthly',
+  yearly: 'yearly',
+} as const;
+
+export type AdminUserPlanStatus = typeof AdminUserPlanStatus[keyof typeof AdminUserPlanStatus];
+
+
+export const AdminUserPlanStatus = {
+  active: 'active',
+  expired: 'expired',
+} as const;
+
+export interface AdminUser {
+  clerkUserId: string;
+  /** @nullable */
+  email: string | null;
+  createdAt: string;
+  plan: AdminUserPlan;
+  planStatus: AdminUserPlanStatus;
+  isPremium: boolean;
+  daysRemaining: number;
+  /** @nullable */
+  premiumExpiresAt: string | null;
+}
+
+export type AdminUpdatePlanInputAction = typeof AdminUpdatePlanInputAction[keyof typeof AdminUpdatePlanInputAction];
+
+
+export const AdminUpdatePlanInputAction = {
+  trial_active: 'trial_active',
+  trial_expired: 'trial_expired',
+  monthly_active: 'monthly_active',
+  monthly_expired: 'monthly_expired',
+  yearly_active: 'yearly_active',
+  yearly_expired: 'yearly_expired',
+} as const;
+
+export interface AdminUpdatePlanInput {
+  action: AdminUpdatePlanInputAction;
+}
+
+export type AdminListUsersParams = {
+/**
+ * Case-insensitive email substring filter
+ */
+search?: string;
+};
 

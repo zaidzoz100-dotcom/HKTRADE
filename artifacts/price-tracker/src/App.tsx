@@ -5,6 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Dashboard from '@/pages/dashboard';
 import Home from '@/pages/home';
+import AdminPage from '@/pages/admin';
 import { AnimatedBackground } from '@/components/animated-background';
 import { Route, Switch, useLocation, Router as WouterRouter, Redirect } from 'wouter';
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
@@ -199,6 +200,7 @@ function ClerkProviderWithRoutes() {
         <Switch>
           <Route path="/" component={HomeRedirect} />
           <Route path="/tracker" component={TrackerPage} />
+          <Route path="/admin" component={AdminPage} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
           <Route component={NotFound} />

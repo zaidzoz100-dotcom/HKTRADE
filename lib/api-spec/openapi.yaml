@@ -16,6 +16,8 @@ tags:
     description: Custom price alerts
   - name: account
     description: Authenticated account and subscription status
+  - name: admin
+    description: Admin-only user management, protected by an admin password
 paths:
   /healthz:
     get:
@@ -169,7 +171,67 @@ paths:
                 $ref: "#/components/schemas/Alert"
         "404":
           description: Not found
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List users for the admin panel, optionally filtered by email
+      security:
+        - adminPassword: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Case-insensitive email substring filter
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Missing or invalid admin password
+  /admin/users/{clerkUserId}:
+    patch:
+      operationId: adminUpdateUserPlan
+      tags: [admin]
+      summary: Manually set a user's plan and active/expired status
+      security:
+        - adminPassword: []
+      parameters:
+        - name: clerkUserId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUpdatePlanInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Missing or invalid admin password
+        "404":
+          description: User not found
 components:
+  securitySchemes:
+    adminPassword:
+      type: apiKey
+      in: header
+      name: x-admin-password
   schemas:
     HealthStatus:
       type: object
@@ -292,11 +354,20 @@ components:
       properties:
         isPremium:
           type: boolean
+        plan:
+          type: string
+          enum: [trial, monthly, yearly]
+        planStatus:
+          type: string
+          enum: [active, expired]
         trialStartedAt:
           type: string
           format: date-time
         trialEndsAt:
           type: string
+          format: date-time
+        premiumExpiresAt:
+          type: ["string", "null"]
           format: date-time
         daysRemaining:
           type: integer
@@ -305,8 +376,11 @@ components:
           type: boolean
       required:
         - isPremium
+        - plan
+        - planStatus
         - trialStartedAt
         - trialEndsAt
+        - premiumExpiresAt
         - daysRemaining
         - canCreateAlerts
     SubscriptionRequiredError:
@@ -317,4 +391,49 @@ components:
         contactUrl:
           type: string
       required: [error, contactUrl]
+    AdminUser:
+      type: object
+      properties:
+        clerkUserId:
+          type: string
+        email:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        plan:
+          type: string
+          enum: [trial, monthly, yearly]
+        planStatus:
+          type: string
+          enum: [active, expired]
+        isPremium:
+          type: boolean
+        daysRemaining:
+          type: integer
+        premiumExpiresAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - clerkUserId
+        - email
+        - createdAt
+        - plan
+        - planStatus
+        - isPremium
+        - daysRemaining
+        - premiumExpiresAt
+    AdminUpdatePlanInput:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - trial_active
+            - trial_expired
+            - monthly_active
+            - monthly_expired
+            - yearly_active
+            - yearly_expired
+      required: [action]
 

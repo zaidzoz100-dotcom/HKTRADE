@@ -1,0 +1,123 @@
+{
+  "id": "9f7561be-5612-48d4-b082-710456c5d500",
+  "createdAt": "2026-07-15T22:15:27.509Z",
+  "runtimeVersion": "exposdk:54.0.0",
+  "launchAsset": {
+    "key": "bundle-1784153727509-8074",
+    "contentType": "application/javascript",
+    "url": "https://hktrade.vip/mobile/1784153727509-8074/_expo/static/js/ios/bundle.js"
+  },
+  "assets": [],
+  "metadata": {},
+  "extra": {
+    "eas": {
+      "projectId": "8cd830af-c250-42e5-96b2-aa113ec18cce"
+    },
+    "expoClient": {
+      "name": "Forex Alarm",
+      "slug": "aurum-watch-mobile",
+      "version": "1.0.0",
+      "orientation": "portrait",
+      "icon": "./assets/images/icon.png",
+      "scheme": "aurum-watch-mobile",
+      "userInterfaceStyle": "automatic",
+      "newArchEnabled": true,
+      "splash": {
+        "image": "./assets/images/icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#09090b",
+        "imageUrl": "http://127.0.0.1:8081/assets/./assets/images/icon.png"
+      },
+      "ios": {
+        "supportsTablet": false
+      },
+      "android": {
+        "package": "com.forexalarm.app",
+        "versionCode": 1,
+        "adaptiveIcon": {
+          "foregroundImage": "./assets/images/adaptive-icon-foreground.png",
+          "backgroundColor": "#09090b",
+          "foregroundImageUrl": "http://127.0.0.1:8081/assets/./assets/images/adaptive-icon-foreground.png"
+        }
+      },
+      "web": {
+        "favicon": "./assets/images/icon.png"
+      },
+      "plugins": [
+        [
+          "expo-router",
+          {
+            "origin": "https://replit.com/"
+          }
+        ],
+        "expo-font",
+        "expo-web-browser",
+        "expo-secure-store",
+        [
+          "expo-notifications",
+          {
+            "icon": "./assets/images/icon.png",
+            "color": "#fbc02d"
+          }
+        ]
+      ],
+      "experiments": {
+        "typedRoutes": true,
+        "reactCompiler": true
+      },
+      "extra": {
+        "eas": {
+          "projectId": "8cd830af-c250-42e5-96b2-aa113ec18cce"
+        },
+        "router": {
+          "origin": "https://replit.com/"
+        }
+      },
+      "_internal": {
+        "isDebug": false,
+        "projectRoot": "/home/runner/workspace/artifacts/aurum-watch-mobile",
+        "dynamicConfigPath": {},
+        "staticConfigPath": "/home/runner/workspace/artifacts/aurum-watch-mobile/app.json",
+        "packageJsonPath": "/home/runner/workspace/artifacts/aurum-watch-mobile/package.json",
+        "pluginHistory": {
+          "expo-font": {
+            "name": "expo-font",
+            "version": "14.0.12"
+          },
+          "expo-web-browser": {
+            "name": "expo-web-browser",
+            "version": "15.0.11"
+          },
+          "expo-secure-store": {
+            "name": "expo-secure-store",
+            "version": "15.0.8"
+          },
+          "expo-notifications": {
+            "name": "expo-notifications",
+            "version": "57.0.3"
+          }
+        }
+      },
+      "sdkVersion": "54.0.0",
+      "platforms": [
+        "ios",
+        "android",
+        "web"
+      ],
+      "iconUrl": "http://127.0.0.1:8081/assets/./assets/images/icon.png",
+      "hostUri": "hktrade.vip/ios"
+    },
+    "expoGo": {
+      "debuggerHost": "hktrade.vip/ios",
+      "developer": {
+        "tool": "expo-cli",
+        "projectRoot": "/home/runner/workspace/artifacts/aurum-watch-mobile"
+      },
+      "packagerOpts": {
+        "dev": false
+      },
+      "mainModuleName": "node_modules/.pnpm/expo-router@6.0.24_@types+react-dom@19.1.11_@types+react@19.1.17__@types+react@19.1.17__c289c0218f446f5969794daa94e36b65/node_modules/expo-router/entry"
+    },
+    "scopeKey": "@anonymous/aurum-watch-mobile-1e6537ed-2541-484c-97d8-428d19942ee9"
+  }
+}

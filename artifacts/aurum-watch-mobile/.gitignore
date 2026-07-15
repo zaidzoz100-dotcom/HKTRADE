@@ -9,9 +9,12 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native (EAS build outputs — but static-build/ must stay tracked)
 ios/
 android/
+!static-build/
+!static-build/**
+static-build/**/node_modules/
 *.orig.*
 *.jks
 *.p8

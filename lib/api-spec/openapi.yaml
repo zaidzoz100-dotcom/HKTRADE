@@ -330,12 +330,9 @@ components:
           type: string
         targetPrice:
           type: number
-        direction:
-          type: string
-          enum: [above, below]
         note:
           type: ["string", "null"]
-      required: [assetSymbol, assetLabel, targetPrice, direction]
+      required: [assetSymbol, assetLabel, targetPrice]
     AlertUpdate:
       type: object
       properties:

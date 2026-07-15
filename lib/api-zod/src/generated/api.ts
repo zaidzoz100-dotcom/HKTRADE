@@ -77,7 +77,6 @@ export const CreateAlertBody = zod.object({
   "assetSymbol": zod.string(),
   "assetLabel": zod.string(),
   "targetPrice": zod.number(),
-  "direction": zod.enum(['above', 'below']),
   "note": zod.string().nullish()
 })
 

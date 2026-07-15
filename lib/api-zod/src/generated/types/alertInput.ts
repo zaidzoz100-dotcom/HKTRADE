@@ -5,13 +5,11 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { AlertInputDirection } from './alertInputDirection';
 
 export interface AlertInput {
   assetSymbol: string;
   assetLabel: string;
   targetPrice: number;
-  direction: AlertInputDirection;
   /** @nullable */
   note?: string | null;
 }

@@ -14,6 +14,30 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/requireAuth";
 import { ensureUser, computeAccountStatus, CONTACT_ADMIN_URL } from "../lib/account";
+import { getSnapshotOrFetch } from "../lib/priceFeed";
+
+/**
+ * The client no longer asks the user to pick a trigger direction — an alert
+ * should just fire whenever the price reaches the target, from either side.
+ * We derive the direction we store from where the price currently sits
+ * relative to the target: if the target is above the current price, the
+ * price needs to rise to reach it ("above"); if it's below, the price needs
+ * to fall ("below"). Ties default to "above". This keeps the existing
+ * threshold-crossing logic in priceFeed.ts untouched.
+ */
+async function inferDirection(
+  assetSymbol: string,
+  targetPrice: number,
+): Promise<"above" | "below"> {
+  const snapshot = await getSnapshotOrFetch();
+  const currentPrice =
+    snapshot.metals.find((m) => m.symbol === assetSymbol)?.price ??
+    snapshot.forex.find((f) => f.pair === assetSymbol)?.rate ??
+    null;
+
+  if (currentPrice === null) return "above";
+  return targetPrice < currentPrice ? "below" : "above";
+}
 
 const router: IRouter = Router();
 
@@ -59,6 +83,11 @@ router.post("/alerts", async (req, res): Promise<void> => {
     return;
   }
 
+  const direction = await inferDirection(
+    parsed.data.assetSymbol,
+    parsed.data.targetPrice,
+  );
+
   const [alert] = await db
     .insert(alertsTable)
     .values({
@@ -66,7 +95,7 @@ router.post("/alerts", async (req, res): Promise<void> => {
       assetSymbol: parsed.data.assetSymbol,
       assetLabel: parsed.data.assetLabel,
       targetPrice: parsed.data.targetPrice,
-      direction: parsed.data.direction,
+      direction,
       note: parsed.data.note ?? null,
     })
     .returning();

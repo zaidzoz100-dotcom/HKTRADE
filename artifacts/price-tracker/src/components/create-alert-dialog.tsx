@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useCreateAlert, useGetAccount, getGetAccountQueryKey, getListAlertsQueryKey, AlertInputDirection } from "@workspace/api-client-react";
+import { useCreateAlert, useGetAccount, getGetAccountQueryKey, getListAlertsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,6 @@ const ASSETS = [
 const formSchema = z.object({
   assetSymbol: z.string().min(1, "Required"),
   targetPrice: z.coerce.number().positive("Must be positive"),
-  direction: z.enum([AlertInputDirection.above, AlertInputDirection.below]),
   note: z.string().optional(),
 });
 
@@ -62,7 +61,6 @@ export function CreateAlertDialog() {
     defaultValues: {
       assetSymbol: "XAU",
       targetPrice: 0,
-      direction: AlertInputDirection.above,
       note: "",
     },
   });
@@ -80,7 +78,6 @@ export function CreateAlertDialog() {
           assetSymbol: values.assetSymbol,
           assetLabel: asset.label,
           targetPrice: values.targetPrice,
-          direction: values.direction,
           note: values.note || null,
         }
       },
@@ -127,54 +124,30 @@ export function CreateAlertDialog() {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="assetSymbol"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Asset</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select asset" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {ASSETS.map(asset => (
-                          <SelectItem key={asset.symbol} value={asset.symbol}>
-                            {asset.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="direction"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trigger When</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Direction" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="above">Rises Above ↗</SelectItem>
-                        <SelectItem value="below">Drops Below ↘</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="assetSymbol"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Asset</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select asset" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ASSETS.map(asset => (
+                        <SelectItem key={asset.symbol} value={asset.symbol}>
+                          {asset.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -193,6 +166,9 @@ export function CreateAlertDialog() {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono">$</span>
                     </div>
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    You'll be alerted the moment the price reaches this level, rising or falling.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

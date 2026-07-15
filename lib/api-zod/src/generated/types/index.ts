@@ -18,7 +18,6 @@ export * from './adminUserPlanStatus';
 export * from './alert';
 export * from './alertDirection';
 export * from './alertInput';
-export * from './alertInputDirection';
 export * from './alertStatus';
 export * from './alertUpdate';
 export * from './alertUpdateDirection';

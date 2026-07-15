@@ -67,19 +67,10 @@ export interface Alert {
   acknowledgedAt: string | null;
 }
 
-export type AlertInputDirection = typeof AlertInputDirection[keyof typeof AlertInputDirection];
-
-
-export const AlertInputDirection = {
-  above: 'above',
-  below: 'below',
-} as const;
-
 export interface AlertInput {
   assetSymbol: string;
   assetLabel: string;
   targetPrice: number;
-  direction: AlertInputDirection;
   /** @nullable */
   note?: string | null;
 }

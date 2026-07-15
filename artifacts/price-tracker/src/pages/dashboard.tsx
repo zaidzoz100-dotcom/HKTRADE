@@ -131,7 +131,16 @@ export default function TrackerDashboard() {
           header's backdrop-blur can't clip/contain the fixed-position FAB. */}
       <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => {
+              const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+              window.location.href = `${basePath}/tracker`;
+            }}
+            className="flex items-center gap-2.5 rounded-md -mx-1 px-1 py-1 transition-opacity hover:opacity-80 active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            aria-label="Go to dashboard home"
+            title="Home"
+          >
             <BrandLogo size={30} />
             <div className="flex flex-col justify-center">
               <h1 className="font-sans font-extrabold text-base leading-none tracking-tight">
@@ -139,7 +148,7 @@ export default function TrackerDashboard() {
               </h1>
               <span className="text-[10px] font-sans text-muted-foreground tracking-[0.15em] mt-0.5">Price Alerts</span>
             </div>
-          </div>
+          </button>
 
           <div className="flex items-center gap-4">
             {user?.primaryEmailAddress && (

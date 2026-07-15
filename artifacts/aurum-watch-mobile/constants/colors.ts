@@ -1,59 +1,61 @@
 /**
  * Semantic design tokens for the mobile app.
  *
- * These tokens mirror the naming conventions used in web artifacts (index.css)
- * so that multi-artifact projects share a cohesive visual identity.
- *
- * Replace the placeholder values below with values that match the project's
- * brand. If a sibling web artifact exists, read its index.css and convert the
- * HSL values to hex so both artifacts use the same palette.
- *
- * To add dark mode, add a `dark` key with the same token names.
- * The useColors() hook will automatically pick it up.
+ * Mirrors the "trading desk" dark theme from the sibling Forex Alarm web
+ * artifact (artifacts/price-tracker/src/index.css) so both apps share one
+ * visual identity. The app is always dark — there is no light theme toggle
+ * on the web app either — so the same palette is used regardless of the
+ * device's system appearance.
  */
 
+const dark = {
+  // Legacy aliases (kept for backward compatibility)
+  text: '#fafafa',
+  tint: '#fbc02d',
+
+  // Core surfaces
+  background: '#09090b',
+  foreground: '#fafafa',
+
+  // Cards / elevated surfaces
+  card: '#0e0e11',
+  cardForeground: '#fafafa',
+
+  // Primary action color (gold/amber, matches the web app's brand accent)
+  primary: '#fbc02d',
+  primaryForeground: '#09090b',
+
+  // Secondary / less-emphasis interactive surfaces
+  secondary: '#27272a',
+  secondaryForeground: '#fafafa',
+
+  // Muted / subdued elements (dividers, timestamps, placeholders)
+  muted: '#27272a',
+  mutedForeground: '#a1a1aa',
+
+  // Accent highlights (badges, selected items, focus rings)
+  accent: '#27272a',
+  accentForeground: '#fafafa',
+
+  // Destructive actions (delete, error states, triggered alerts)
+  destructive: '#ef4343',
+  destructiveForeground: '#fafafa',
+
+  // Positive / "above" direction accents (not in the web token set, but
+  // used consistently across both apps for price-up states)
+  success: '#22c55e',
+
+  // Borders and input outlines
+  border: '#27272a',
+  input: '#27272a',
+};
+
 const colors = {
-  light: {
-    // Legacy aliases (kept for backward compatibility)
-    text: '#0a0a0a',
-    tint: '#2f95dc',
+  light: dark,
+  dark,
 
-    // Core surfaces
-    background: '#ffffff',
-    foreground: '#0a0a0a',
-
-    // Cards / elevated surfaces
-    card: '#f9f9f9',
-    cardForeground: '#0a0a0a',
-
-    // Primary action color (buttons, links, active states)
-    primary: '#2f95dc',
-    primaryForeground: '#ffffff',
-
-    // Secondary / less-emphasis interactive surfaces
-    secondary: '#f0f0f0',
-    secondaryForeground: '#1a1a1a',
-
-    // Muted / subdued elements (dividers, timestamps, placeholders)
-    muted: '#f0f0f0',
-    mutedForeground: '#737373',
-
-    // Accent highlights (badges, selected items, focus rings)
-    accent: '#f0f0f0',
-    accentForeground: '#1a1a1a',
-
-    // Destructive actions (delete, error states)
-    destructive: '#ef4444',
-    destructiveForeground: '#ffffff',
-
-    // Borders and input outlines
-    border: '#e5e5e5',
-    input: '#e5e5e5',
-  },
-
-  // Border radius (in px). Sync from the sibling web artifact's --radius
-  // CSS variable. This value applies to cards, buttons, inputs, and modals.
-  radius: 8,
+  // Border radius (in px). Synced from the web app's --radius: 0.3rem (~5px).
+  radius: 6,
 };
 
 export default colors;

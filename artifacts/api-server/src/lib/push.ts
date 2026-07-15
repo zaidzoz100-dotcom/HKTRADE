@@ -1,6 +1,6 @@
 import webpush from "web-push";
 import { Expo, type ExpoPushMessage } from "expo-server-sdk";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   db,
   pushSubscriptionsTable,
@@ -79,8 +79,15 @@ export async function saveExpoPushToken(clerkUserId: string, token: string): Pro
     });
 }
 
-/** Removes an Expo push token, e.g. when the user opts out on that device. */
-export async function removeExpoPushToken(token: string): Promise<void> {
+/** Removes an Expo push token, e.g. when the user opts out on that device. Scoped to the owning user so one user cannot unregister another user's device. */
+export async function removeExpoPushToken(clerkUserId: string, token: string): Promise<void> {
+  await db
+    .delete(expoPushTokensTable)
+    .where(and(eq(expoPushTokensTable.token, token), eq(expoPushTokensTable.clerkUserId, clerkUserId)));
+}
+
+/** Prunes a token the Expo push service reports as permanently invalid (e.g. app uninstalled). System-initiated, not a user request, so it isn't scoped to a single clerkUserId. */
+async function pruneStaleExpoPushToken(token: string): Promise<void> {
   await db.delete(expoPushTokensTable).where(eq(expoPushTokensTable.token, token));
 }
 
@@ -127,7 +134,7 @@ export async function sendExpoPushToUser(clerkUserId: string, payload: PushPaylo
       tickets.forEach((ticket, i) => {
         if (ticket.status === "error" && ticket.details?.error === "DeviceNotRegistered") {
           const badToken = chunk[i].to as string;
-          void removeExpoPushToken(badToken).catch((err) => {
+          void pruneStaleExpoPushToken(badToken).catch((err) => {
             logger.error({ err, clerkUserId }, "Failed to prune stale Expo push token");
           });
         }

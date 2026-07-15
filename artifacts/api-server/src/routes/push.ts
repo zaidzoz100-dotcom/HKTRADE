@@ -56,7 +56,7 @@ router.post("/push/expo-token/unregister", requireAuth, async (req, res): Promis
     res.status(400).json({ error: body.error.message });
     return;
   }
-  await removeExpoPushToken(body.data.token);
+  await removeExpoPushToken(req.userId!, body.data.token);
   res.sendStatus(204);
 });
 

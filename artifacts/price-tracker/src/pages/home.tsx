@@ -1,5 +1,6 @@
 import { useLocation } from 'wouter';
 import { BrandLogo } from '@/components/brand-logo';
+import { PremiumPlansSection } from '@/components/premium-plans-section';
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -66,6 +67,8 @@ export default function Home() {
             Sign in
           </button>
         </div>
+
+        <PremiumPlansSection />
       </main>
     </div>
   );

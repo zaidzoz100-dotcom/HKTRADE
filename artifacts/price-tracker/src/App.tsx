@@ -214,6 +214,18 @@ function ClerkProviderWithRoutes() {
 function App() {
   useEffect(() => {
     capturePendingReferralCode();
+
+    // Register the service worker unconditionally (not just when the user opts
+    // into push) so Chrome/Android recognize this as an installable PWA and
+    // fire `beforeinstallprompt`. Registration is a no-op if already registered.
+    if ('serviceWorker' in navigator) {
+      const swUrl = `${import.meta.env.BASE_URL}sw.js`;
+      navigator.serviceWorker
+        .register(swUrl, { scope: import.meta.env.BASE_URL })
+        .catch(() => {
+          // Non-fatal — push/install simply won't be available.
+        });
+    }
   }, []);
 
   return (

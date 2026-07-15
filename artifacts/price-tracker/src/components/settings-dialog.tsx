@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Play, Bell, BellOff, BellRing, Settings2, Smartphone, Loader2, Gift, Copy, Check } from "lucide-react";
+import { Play, Bell, BellOff, BellRing, Settings2, Smartphone, Loader2, Gift, Copy, Check, Download, Share, CheckCircle2 } from "lucide-react";
 import { audioAlarm, RINGTONES, type RingtoneId } from "@/lib/audio-alarm";
 import { getStoredRingtone, setStoredRingtone } from "@/lib/settings";
 import { notificationService } from "@/lib/notifications";
@@ -24,6 +24,7 @@ import {
   unsubscribeFromPush,
 } from "@/lib/push-notifications";
 import { buildReferralLink } from "@/lib/referral";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import {
   useGetPushVapidPublicKey,
   useSubscribePush,
@@ -49,6 +50,7 @@ export function SettingsDialog({
   const { data: vapid } = useGetPushVapidPublicKey();
   const subscribePush = useSubscribePush();
   const unsubscribePush = useUnsubscribePush();
+  const { canPromptInstall, installed, isIOS, promptInstall } = useInstallPrompt();
 
   const { data: account } = useGetAccount({
     query: { queryKey: getGetAccountQueryKey() },
@@ -242,6 +244,40 @@ export function SettingsDialog({
             {permission === "unsupported" && (
               <p className="text-xs text-muted-foreground">
                 Notifications aren't supported in this browser.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3 border-t border-border pt-5">
+            <h3 className="text-sm font-semibold text-foreground">Install App</h3>
+            <p className="text-xs text-muted-foreground">
+              Install Forex Alarm to your home screen so it opens like a real app and can reliably deliver alerts even when it's closed.
+            </p>
+            {installed ? (
+              <div className="flex items-center gap-2 text-sm text-emerald-400 font-mono">
+                <CheckCircle2 className="h-4 w-4" />
+                Installed on this device
+              </div>
+            ) : canPromptInstall ? (
+              <Button
+                type="button"
+                onClick={() => promptInstall()}
+                className="w-full font-mono uppercase tracking-wide gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Install App
+              </Button>
+            ) : isIOS ? (
+              <div className="flex items-start gap-2 rounded-lg border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
+                <Share className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Tap the Share icon in Safari, then choose <strong className="text-foreground">Add to Home Screen</strong>.
+                </span>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Open your browser's menu and look for <strong className="text-foreground">Install app</strong> or{" "}
+                <strong className="text-foreground">Add to Home Screen</strong>.
               </p>
             )}
           </div>

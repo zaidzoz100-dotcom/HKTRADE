@@ -11,6 +11,7 @@ import { Route, Switch, useLocation, Router as WouterRouter, Redirect } from 'wo
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { dark } from '@clerk/themes';
+import { capturePendingReferralCode } from '@/lib/referral';
 
 const queryClient = new QueryClient();
 
@@ -211,6 +212,10 @@ function ClerkProviderWithRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    capturePendingReferralCode();
+  }, []);
+
   return (
     <TooltipProvider>
       <AnimatedBackground />

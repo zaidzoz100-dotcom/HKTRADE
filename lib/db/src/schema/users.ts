@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
 
 /** Manually-managed subscription plan, set by the admin panel. */
 export const PREMIUM_PLANS = ["trial", "monthly", "yearly"] as const;
@@ -31,6 +31,12 @@ export const usersTable = pgTable("users", {
   premiumExpiresAt: timestamp("premium_expires_at", { withTimezone: true }),
   /** User-selected asset symbols shown as market cards on the dashboard. Null/empty means "use the default lineup". */
   favoriteAssets: jsonb("favorite_assets").$type<string[]>(),
+  /** This user's own shareable referral code — generated once at account creation. */
+  referralCode: text("referral_code").notNull().unique(),
+  /** The referral code this user signed up with, if any. Null means they weren't referred, or haven't redeemed one yet. Set at most once. */
+  referredByCode: text("referred_by_code"),
+  /** Extra trial days earned by successfully referring other users (4 per referral); added on top of TRIAL_DAYS when computing this user's trial window. */
+  referralBonusDays: integer("referral_bonus_days").notNull().default(0),
 });
 
 export type User = typeof usersTable.$inferSelect;

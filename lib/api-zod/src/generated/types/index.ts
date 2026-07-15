@@ -22,6 +22,7 @@ export * from './alertStatus';
 export * from './alertUpdate';
 export * from './alertUpdateDirection';
 export * from './alertUpdateStatus';
+export * from './applyReferralInput';
 export * from './assetInfo';
 export * from './assetInfoCategory';
 export * from './cryptoPrice';

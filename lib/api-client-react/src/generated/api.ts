@@ -27,6 +27,7 @@ import type {
   Alert,
   AlertInput,
   AlertUpdate,
+  ApplyReferralInput,
   AssetInfo,
   HealthStatus,
   PriceSnapshot,
@@ -296,6 +297,78 @@ export function useGetAccount<TData = Awaited<ReturnType<typeof getAccount>>, TE
 
 
 
+
+export const getApplyReferralUrl = () => {
+
+
+
+
+  return `/api/account/referral`
+}
+
+/**
+ * A user may redeem at most one referral code, and only if they haven't already redeemed one.
+ * @summary Redeem a referral code, rewarding the referrer with extra trial days
+ */
+export const applyReferral = async (applyReferralInput: ApplyReferralInput, options?: RequestInit): Promise<AccountStatus> => {
+
+  return customFetch<AccountStatus>(getApplyReferralUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(applyReferralInput)
+  }
+);}
+
+
+
+
+
+export const getApplyReferralMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applyReferral>>, TError,{data: BodyType<ApplyReferralInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof applyReferral>>, TError,{data: BodyType<ApplyReferralInput>}, TContext> => {
+
+const mutationKey = ['applyReferral'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof applyReferral>>, {data: BodyType<ApplyReferralInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  applyReferral(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApplyReferralMutationResult = NonNullable<Awaited<ReturnType<typeof applyReferral>>>
+    export type ApplyReferralMutationBody = BodyType<ApplyReferralInput>
+    export type ApplyReferralMutationError = ErrorType<void>
+
+    /**
+ * @summary Redeem a referral code, rewarding the referrer with extra trial days
+ */
+export const useApplyReferral = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applyReferral>>, TError,{data: BodyType<ApplyReferralInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof applyReferral>>,
+        TError,
+        {data: BodyType<ApplyReferralInput>},
+        TContext
+      > => {
+      return useMutation(getApplyReferralMutationOptions(options));
+    }
 
 export const getUpdateFavoriteAssetsUrl = () => {
 

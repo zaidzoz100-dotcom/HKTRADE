@@ -54,7 +54,34 @@ export const GetAccountResponse = zod.object({
   "premiumExpiresAt": zod.coerce.date().nullable(),
   "daysRemaining": zod.number().describe('Days left in the free trial, 0 if expired or premium'),
   "canCreateAlerts": zod.boolean(),
-  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards')
+  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards'),
+  "referralCode": zod.string().describe('This user\'s own shareable referral code'),
+  "referredByCode": zod.string().nullable().describe('The referral code this user redeemed, if any'),
+  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)')
+})
+
+
+/**
+ * A user may redeem at most one referral code, and only if they haven't already redeemed one.
+ * @summary Redeem a referral code, rewarding the referrer with extra trial days
+ */
+export const ApplyReferralBody = zod.object({
+  "code": zod.string()
+})
+
+export const ApplyReferralResponse = zod.object({
+  "isPremium": zod.boolean(),
+  "plan": zod.enum(['trial', 'monthly', 'yearly']),
+  "planStatus": zod.enum(['active', 'expired']),
+  "trialStartedAt": zod.coerce.date(),
+  "trialEndsAt": zod.coerce.date(),
+  "premiumExpiresAt": zod.coerce.date().nullable(),
+  "daysRemaining": zod.number().describe('Days left in the free trial, 0 if expired or premium'),
+  "canCreateAlerts": zod.boolean(),
+  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards'),
+  "referralCode": zod.string().describe('This user\'s own shareable referral code'),
+  "referredByCode": zod.string().nullable().describe('The referral code this user redeemed, if any'),
+  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)')
 })
 
 
@@ -74,7 +101,10 @@ export const UpdateFavoriteAssetsResponse = zod.object({
   "premiumExpiresAt": zod.coerce.date().nullable(),
   "daysRemaining": zod.number().describe('Days left in the free trial, 0 if expired or premium'),
   "canCreateAlerts": zod.boolean(),
-  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards')
+  "favoriteAssets": zod.array(zod.string()).describe('Asset symbols the user has chosen to show as market cards'),
+  "referralCode": zod.string().describe('This user\'s own shareable referral code'),
+  "referredByCode": zod.string().nullable().describe('The referral code this user redeemed, if any'),
+  "referralBonusDays": zod.number().describe('Extra trial days earned by referring other users (4 per successful referral)')
 })
 
 

@@ -180,6 +180,19 @@ export interface AccountStatus {
   canCreateAlerts: boolean;
   /** Asset symbols the user has chosen to show as market cards */
   favoriteAssets: string[];
+  /** This user's own shareable referral code */
+  referralCode: string;
+  /**
+     * The referral code this user redeemed, if any
+     * @nullable
+     */
+  referredByCode: string | null;
+  /** Extra trial days earned by referring other users (4 per successful referral) */
+  referralBonusDays: number;
+}
+
+export interface ApplyReferralInput {
+  code: string;
 }
 
 export interface SubscriptionRequiredError {

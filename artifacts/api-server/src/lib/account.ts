@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and, isNull, ne } from "drizzle-orm";
 import { db, usersTable, type User, type PremiumPlan } from "@workspace/db";
 import { DEFAULT_FAVORITE_ASSETS, isValidAssetSymbol } from "./assets";
 
@@ -11,6 +11,7 @@ export type AdminPlanAction =
   | "yearly_expired";
 
 export const TRIAL_DAYS = 4;
+export const REFERRAL_REWARD_DAYS = 4;
 export const CONTACT_ADMIN_URL = "https://t.me/hackedtrad";
 
 export interface AccountStatus {
@@ -23,6 +24,19 @@ export interface AccountStatus {
   daysRemaining: number;
   canCreateAlerts: boolean;
   favoriteAssets: string[];
+  referralCode: string;
+  referredByCode: string | null;
+  referralBonusDays: number;
+}
+
+const REFERRAL_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I — avoids ambiguous codes
+
+function generateReferralCode(length = 8): string {
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += REFERRAL_CODE_ALPHABET[Math.floor(Math.random() * REFERRAL_CODE_ALPHABET.length)];
+  }
+  return code;
 }
 
 /** JIT-provision a local user record for a Clerk-authenticated request. */
@@ -33,22 +47,25 @@ export async function ensureUser(clerkUserId: string): Promise<User> {
     .where(eq(usersTable.clerkUserId, clerkUserId));
   if (existing) return existing;
 
-  const [created] = await db
-    .insert(usersTable)
-    .values({ clerkUserId })
-    .onConflictDoNothing()
-    .returning();
-  if (created) return created;
+  // Retry on the rare chance of a referral-code collision (unique constraint).
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const [created] = await db
+      .insert(usersTable)
+      .values({ clerkUserId, referralCode: generateReferralCode() })
+      .onConflictDoNothing()
+      .returning();
+    if (created) return created;
 
-  // Lost a race with a concurrent request that inserted first.
-  const [raced] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.clerkUserId, clerkUserId));
-  if (!raced) {
-    throw new Error(`Failed to provision user ${clerkUserId}`);
+    // Either another request inserted this clerkUserId first, or we collided
+    // on referralCode. Check which — if the user now exists, return it.
+    const [raced] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.clerkUserId, clerkUserId));
+    if (raced) return raced;
   }
-  return raced;
+
+  throw new Error(`Failed to provision user ${clerkUserId}`);
 }
 
 /**
@@ -66,6 +83,10 @@ export function computeAccountStatus(user: User): AccountStatus {
     user.favoriteAssets && user.favoriteAssets.length > 0
       ? user.favoriteAssets
       : [...DEFAULT_FAVORITE_ASSETS];
+
+  const referralCode = user.referralCode;
+  const referredByCode = user.referredByCode ?? null;
+  const referralBonusDays = user.referralBonusDays ?? 0;
 
   if (plan === "monthly" || plan === "yearly") {
     const active =
@@ -85,12 +106,15 @@ export function computeAccountStatus(user: User): AccountStatus {
       daysRemaining: 0,
       canCreateAlerts: active,
       favoriteAssets,
+      referralCode,
+      referredByCode,
+      referralBonusDays,
     };
   }
 
   const trialStartedAt = user.trialStartedAt ?? user.createdAt;
   const trialEndsAt = new Date(
-    trialStartedAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000,
+    trialStartedAt.getTime() + (TRIAL_DAYS + referralBonusDays) * 24 * 60 * 60 * 1000,
   );
   const msRemaining = trialEndsAt.getTime() - now.getTime();
   const daysRemaining = Math.max(0, Math.ceil(msRemaining / (24 * 60 * 60 * 1000)));
@@ -106,7 +130,79 @@ export function computeAccountStatus(user: User): AccountStatus {
     daysRemaining,
     canCreateAlerts: inTrial,
     favoriteAssets,
+    referralCode,
+    referredByCode,
+    referralBonusDays,
   };
+}
+
+export type ReferralApplyResult =
+  | { ok: true; user: User }
+  | { ok: false; error: string };
+
+/**
+ * Redeems a referral code for a user who hasn't already redeemed one.
+ * Rewards the *referrer* (the code's owner) with `REFERRAL_REWARD_DAYS` extra
+ * trial days; the referred user themselves gets no separate bonus — the
+ * spec only rewards the inviter. Wrapped in a transaction so the "already
+ * redeemed" check and both writes (referred user + referrer) are atomic
+ * against concurrent redemption attempts.
+ */
+export async function applyReferral(
+  clerkUserId: string,
+  code: string,
+): Promise<ReferralApplyResult> {
+  const normalizedCode = code.trim().toUpperCase();
+  if (!normalizedCode) {
+    return { ok: false, error: "Referral code is required" };
+  }
+
+  return db.transaction(async (tx) => {
+    const [referred] = await tx
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.clerkUserId, clerkUserId));
+    if (!referred) {
+      return { ok: false, error: "Account not found" };
+    }
+    if (referred.referredByCode) {
+      return { ok: false, error: "Referral already applied to this account" };
+    }
+    if (referred.referralCode === normalizedCode) {
+      return { ok: false, error: "You can't refer yourself" };
+    }
+
+    const [referrer] = await tx
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.referralCode, normalizedCode));
+    if (!referrer) {
+      return { ok: false, error: "Invalid referral code" };
+    }
+
+    const [updatedReferred] = await tx
+      .update(usersTable)
+      .set({ referredByCode: normalizedCode })
+      .where(
+        and(eq(usersTable.id, referred.id), isNull(usersTable.referredByCode)),
+      )
+      .returning();
+    if (!updatedReferred) {
+      // Lost a race with a concurrent redemption on the same account.
+      return { ok: false, error: "Referral already applied to this account" };
+    }
+
+    await tx
+      .update(usersTable)
+      .set({
+        referralBonusDays: referrer.referralBonusDays + REFERRAL_REWARD_DAYS,
+      })
+      .where(
+        and(eq(usersTable.id, referrer.id), ne(usersTable.id, referred.id)),
+      );
+
+    return { ok: true, user: updatedReferred };
+  });
 }
 
 /**

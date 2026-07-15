@@ -61,6 +61,29 @@ paths:
                 $ref: "#/components/schemas/AccountStatus"
         "401":
           description: Not authenticated
+  /account/referral:
+    post:
+      operationId: applyReferral
+      tags: [account]
+      summary: Redeem a referral code, rewarding the referrer with extra trial days
+      description: A user may redeem at most one referral code, and only if they haven't already redeemed one.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplyReferralInput"
+      responses:
+        "200":
+          description: Updated account status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountStatus"
+        "400":
+          description: Invalid code, self-referral, or already redeemed
+        "401":
+          description: Not authenticated
   /account/favorites:
     patch:
       operationId: updateFavoriteAssets
@@ -525,6 +548,15 @@ components:
           items:
             type: string
           description: "Asset symbols the user has chosen to show as market cards"
+        referralCode:
+          type: string
+          description: "This user's own shareable referral code"
+        referredByCode:
+          type: ["string", "null"]
+          description: "The referral code this user redeemed, if any"
+        referralBonusDays:
+          type: integer
+          description: "Extra trial days earned by referring other users (4 per successful referral)"
       required:
         - isPremium
         - plan
@@ -535,6 +567,15 @@ components:
         - daysRemaining
         - canCreateAlerts
         - favoriteAssets
+        - referralCode
+        - referredByCode
+        - referralBonusDays
+    ApplyReferralInput:
+      type: object
+      properties:
+        code:
+          type: string
+      required: [code]
     SubscriptionRequiredError:
       type: object
       properties:

@@ -491,10 +491,14 @@ function rewriteLocalhostUrl(value, baseUrl, timestamp) {
   if (typeof value !== 'string') return value;
   // Metro dev-server asset URLs look like:
   //   http://127.0.0.1:8081/assets/./assets/images/icon.png
-  // Rewrite them to the production path:
+  //                                  ^^^^^^^^ Metro prefix
+  //                                           ^^^^^^^ actual relative path from project root
+  // The '.' is the project root, so the real relative path is 'assets/images/icon.png'.
+  // We strip BOTH the Metro prefix AND the leading 'assets/' from the remaining segment
+  // so the result maps to the actual on-disk path:
   //   https://<domain>/mobile/<timestamp>/_expo/static/js/assets/images/icon.png
   return value.replace(
-    /https?:\/\/127\.0\.0\.1:\d+\/assets\/\.?\//g,
+    /https?:\/\/127\.0\.0\.1:\d+\/assets\/\.?\/(?:assets\/)?/g,
     `${baseUrl}${basePath}/${timestamp}/_expo/static/js/assets/`,
   );
 }

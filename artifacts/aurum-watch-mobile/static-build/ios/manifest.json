@@ -1,11 +1,11 @@
 {
-  "id": "6cdbd89a-9bf7-4229-b7a8-a9cba5ba48a1",
-  "createdAt": "2026-07-15T23:21:24.106Z",
+  "id": "c8d0d7e5-7e4b-4254-9c36-a947bce327c8",
+  "createdAt": "2026-07-16T00:01:41.458Z",
   "runtimeVersion": "exposdk:54.0.0",
   "launchAsset": {
-    "key": "bundle-1784157684106-925",
+    "key": "bundle-1784160101458-3345",
     "contentType": "application/javascript",
-    "url": "https://hktrade.vip/mobile/1784157684106-925/_expo/static/js/ios/bundle.js"
+    "url": "https://hktrade.vip/mobile/1784160101458-3345/_expo/static/js/ios/bundle.js"
   },
   "assets": [],
   "metadata": {},
@@ -26,7 +26,7 @@
         "image": "./assets/images/icon.png",
         "resizeMode": "contain",
         "backgroundColor": "#09090b",
-        "imageUrl": "https://hktrade.vip/mobile/1784157684106-925/_expo/static/js/assets/assets/images/icon.png"
+        "imageUrl": "https://hktrade.vip/mobile/1784160101458-3345/_expo/static/js/assets/images/icon.png"
       },
       "ios": {
         "supportsTablet": false
@@ -37,7 +37,7 @@
         "adaptiveIcon": {
           "foregroundImage": "./assets/images/adaptive-icon-foreground.png",
           "backgroundColor": "#09090b",
-          "foregroundImageUrl": "https://hktrade.vip/mobile/1784157684106-925/_expo/static/js/assets/assets/images/adaptive-icon-foreground.png"
+          "foregroundImageUrl": "https://hktrade.vip/mobile/1784160101458-3345/_expo/static/js/assets/images/adaptive-icon-foreground.png"
         }
       },
       "web": {
@@ -104,7 +104,7 @@
         "android",
         "web"
       ],
-      "iconUrl": "https://hktrade.vip/mobile/1784157684106-925/_expo/static/js/assets/assets/images/icon.png",
+      "iconUrl": "https://hktrade.vip/mobile/1784160101458-3345/_expo/static/js/assets/images/icon.png",
       "hostUri": "hktrade.vip/ios"
     },
     "expoGo": {

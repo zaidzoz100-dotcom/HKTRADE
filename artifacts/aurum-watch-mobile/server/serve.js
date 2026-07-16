@@ -57,12 +57,26 @@ function serveManifest(platform, res) {
   }
 
   const manifest = fs.readFileSync(manifestPath, 'utf-8');
+
+  // Expo protocol v1 requires multipart/mixed — sending plain JSON with
+  // expo-protocol-version: 1 causes Expo Go to try parsing JSON as multipart,
+  // fail silently, and hang indefinitely on the bundle download.
+  const boundary = 'expo-boundary';
+  const body =
+    `--${boundary}\r\n` +
+    `Content-Type: application/json\r\n` +
+    `\r\n` +
+    manifest +
+    `\r\n--${boundary}--\r\n`;
+
   res.writeHead(200, {
-    'content-type': 'application/json',
+    'content-type': `multipart/mixed; boundary="${boundary}"`,
     'expo-protocol-version': '1',
     'expo-sfv-version': '0',
+    'cache-control': 'no-store, no-cache, must-revalidate',
+    'pragma': 'no-cache',
   });
-  res.end(manifest);
+  res.end(body);
 }
 
 function serveLandingPage(req, res, landingPageTemplate, appName) {
@@ -115,7 +129,8 @@ function serveStaticFile(urlPath, res) {
   res.writeHead(200, {
     'content-type': contentType,
     'content-length': stat.size,
-    'cache-control': 'public, max-age=31536000, immutable',
+    'cache-control': 'no-store, no-cache, must-revalidate',
+    'pragma': 'no-cache',
   });
 
   const stream = fs.createReadStream(filePath);
